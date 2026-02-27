@@ -35,7 +35,7 @@ export default function CarePlanPage() {
   const [medsTaken, setMedsTaken] = useState<Record<string, boolean>>({});
 
   const { plan, savePlan } = useCarePlan();
-  const { permission, requestPermission, startReminders } = useNotifications();
+  const { permission, requestPermission, startReminders, pushSubscribed } = useNotifications();
   const { canInstall, isInstalled, install, isIOS } = useInstallPrompt();
 
   // Load data: prefer encrypted IndexedDB, fall back to sessionStorage
@@ -163,15 +163,15 @@ export default function CarePlanPage() {
               💊 Want medication reminders?
             </h3>
             <p className="mt-2 text-base" style={{ color: "var(--color-text-secondary)" }}>
-              We&apos;ll send you a gentle reminder each time it&apos;s time to take your medication.
-              You can turn this off anytime.
+              We&apos;ll send you a gentle reminder each time it&apos;s time to take your medication —
+              even when your phone is locked. You can turn this off anytime.
             </p>
             <div className="mt-4 flex gap-3">
               <button
                 onClick={async () => {
                   const result = await requestPermission();
                   if (result === "granted" && data) {
-                    startReminders(
+                    await startReminders(
                       (data.medications ?? []).map((m) => ({
                         id: m.id,
                         name: m.name,
@@ -196,6 +196,24 @@ export default function CarePlanPage() {
               >
                 Not now
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Push Reminders Active Badge */}
+        {pushSubscribed && permission === "granted" && (
+          <div
+            className="mb-6 flex items-center gap-3 rounded-2xl p-4"
+            style={{ backgroundColor: "var(--color-surface)" }}
+          >
+            <span className="text-2xl">✅</span>
+            <div>
+              <p className="font-semibold" style={{ color: "var(--color-text)" }}>
+                Medication reminders active
+              </p>
+              <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+                You&apos;ll get notifications even when your phone is locked
+              </p>
             </div>
           </div>
         )}

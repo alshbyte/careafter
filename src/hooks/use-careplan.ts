@@ -97,14 +97,29 @@ export function useCarePlan() {
  * 
  * This is why we NEVER ask on page load. We show a friendly explanation
  * first, and only trigger the browser prompt when the user opts in.
+ * 
+ * ARCHITECTURE (v2 — Server-Scheduled Push):
+ * When the user enables reminders, we now do TWO things:
+ * 1. Set local setTimeout timers (works while tab is open)
+ * 2. Subscribe to Web Push and send schedule to server (works when tab is CLOSED)
+ * The server cron job sends pushes at the right time via the Push API.
  */
 export function useNotifications() {
   const [permission, setPermission] = useState<NotificationPermissionState>("default");
   const [reminderTimers, setReminderTimers] = useState<number[]>([]);
+  const [pushDeviceId, setPushDeviceId] = useState<string | null>(null);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
 
   useEffect(() => {
     setPermission(getNotificationStatus());
     registerServiceWorker();
+
+    // Check if already push-subscribed
+    const savedDeviceId = localStorage.getItem("careafter_push_device_id");
+    if (savedDeviceId) {
+      setPushDeviceId(savedDeviceId);
+      setPushSubscribed(true);
+    }
   }, []);
 
   const requestPermission = useCallback(async () => {
@@ -113,22 +128,66 @@ export function useNotifications() {
     return result;
   }, []);
 
+  /**
+   * Start both local timers AND server-scheduled push reminders.
+   * 
+   * LEARN: Belt AND suspenders approach:
+   * - Local timers work immediately while the app is open (instant feedback)
+   * - Server push works when the app is closed (reliable, persistent)
+   * Both fire — the notification "tag" prevents duplicates (same tag = same notification)
+   */
   const startReminders = useCallback(
-    (medications: { id: string; name: string; dosage: string; scheduledTimes: string[] }[]) => {
-      // Clear existing timers
+    async (medications: { id: string; name: string; dosage: string; scheduledTimes: string[] }[]) => {
+      // Layer 1: Local setTimeout (works while tab is open)
       reminderTimers.forEach(clearTimeout);
       const newTimers = scheduleMedicationReminders(medications);
       setReminderTimers(newTimers);
+
+      // Layer 2: Server-scheduled Web Push (works when browser is closed)
+      try {
+        const { subscribeToPushReminders } = await import("@/lib/push/client");
+        const result = await subscribeToPushReminders(
+          medications.map((m) => ({
+            name: m.name,
+            dosage: m.dosage,
+            times: m.scheduledTimes,
+          }))
+        );
+
+        if (result) {
+          setPushDeviceId(result.deviceId);
+          setPushSubscribed(true);
+          localStorage.setItem("careafter_push_device_id", result.deviceId);
+          console.log("✅ Push reminders registered with server");
+        }
+      } catch (err) {
+        // Push subscription failed — local timers still work
+        console.warn("Server push subscription failed (local reminders still active):", err);
+      }
     },
     [reminderTimers]
   );
 
-  const stopReminders = useCallback(() => {
+  const stopReminders = useCallback(async () => {
+    // Stop local timers
     reminderTimers.forEach(clearTimeout);
     setReminderTimers([]);
-  }, [reminderTimers]);
 
-  return { permission, requestPermission, startReminders, stopReminders };
+    // Unsubscribe from server push
+    if (pushDeviceId) {
+      try {
+        const { unsubscribeFromPushReminders } = await import("@/lib/push/client");
+        await unsubscribeFromPushReminders(pushDeviceId);
+        setPushDeviceId(null);
+        setPushSubscribed(false);
+        localStorage.removeItem("careafter_push_device_id");
+      } catch (err) {
+        console.warn("Failed to unsubscribe from push:", err);
+      }
+    }
+  }, [reminderTimers, pushDeviceId]);
+
+  return { permission, requestPermission, startReminders, stopReminders, pushSubscribed };
 }
 
 /**

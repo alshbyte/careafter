@@ -1,6 +1,7 @@
-/// <reference lib="webworker" />
+// CareAfter Service Worker v1.1.0
+// Handles: offline caching, push notifications, notification actions
 
-const SW_VERSION = "1.0.0";
+const SW_VERSION = "1.1.0";
 const CACHE_NAME = `careafter-v${SW_VERSION}`;
 
 const STATIC_ASSETS = [
@@ -54,29 +55,73 @@ self.addEventListener("fetch", (event: FetchEvent) => {
 });
 
 // Push notifications for medication reminders
-self.addEventListener("push", (event: PushEvent) => {
+// LEARN: This fires when our server sends a Web Push message.
+// The service worker wakes up (even if the browser tab is closed!)
+// and shows the notification. On Android, this works exactly like
+// a native app notification.
+self.addEventListener("push", (event) => {
   const data = event.data?.json() ?? {};
   const title = data.title ?? "CareAfter Reminder";
-  const options: NotificationOptions = {
+  const options = {
     body: data.body ?? "Time for your medication",
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     tag: data.tag ?? "careafter-reminder",
     requireInteraction: true,
+    data: data, // Pass data through for notification click handler
     actions: [
       { action: "taken", title: "✅ Taken" },
       { action: "snooze", title: "⏰ Snooze 15min" },
     ],
   };
   event.waitUntil(
-    (self as unknown as ServiceWorkerGlobalScope).registration.showNotification(title, options)
+    self.registration.showNotification(title, options)
   );
 });
 
 // Handle notification clicks
-self.addEventListener("notificationclick", (event: NotificationEvent) => {
+// LEARN: When a user taps a push notification, this fires.
+// "action" tells us which button they tapped:
+// - "taken" → they took their medication (mark it)
+// - "snooze" → remind again in 15 minutes
+// - (no action) → they tapped the notification body itself
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+
+  if (event.action === "snooze") {
+    // Snooze: show another notification in 15 minutes
+    const data = event.notification.data || {};
+    setTimeout(() => {
+      self.registration.showNotification(
+        event.notification.title,
+        {
+          body: event.notification.body,
+          icon: "/icons/icon-192.png",
+          badge: "/icons/icon-192.png",
+          tag: event.notification.tag,
+          requireInteraction: true,
+          data: data,
+          actions: [
+            { action: "taken", title: "✅ Taken" },
+            { action: "snooze", title: "⏰ Snooze 15min" },
+          ],
+        }
+      );
+    }, 15 * 60 * 1000); // 15 minutes
+    return;
+  }
+
+  // Default: open the care plan page
   event.waitUntil(
-    (self as unknown as ServiceWorkerGlobalScope).clients.openWindow("/plan/medications")
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      // If the app is already open, focus it
+      for (const client of windowClients) {
+        if (client.url.includes("/plan") && "focus" in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise, open a new window
+      return clients.openWindow("/plan");
+    })
   );
 });
