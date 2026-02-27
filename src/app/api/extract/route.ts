@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { image } = body;
+    const { image, language } = body;
 
     if (!image || typeof image !== "string") {
       return NextResponse.json(
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await extractDischargeData(image, apiKey, endpoint);
+    const result = await extractDischargeData(image, apiKey, endpoint, language);
 
     if (!result.success) {
       return NextResponse.json(

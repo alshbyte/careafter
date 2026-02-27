@@ -4,6 +4,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAnalytics } from "@/components/analytics-provider";
+import { LanguageSelector } from "@/components/language-selector";
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/types";
 
 type CaptureState = "idle" | "camera" | "preview" | "uploading" | "error";
 
@@ -11,6 +13,7 @@ export default function ScanPage() {
   const [state, setState] = useState<CaptureState>("idle");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -21,7 +24,15 @@ export default function ScanPage() {
   // Track scan_started when the page mounts
   useEffect(() => {
     trackEvent("scan_started");
+    // Restore language preference from sessionStorage
+    const savedLang = sessionStorage.getItem("careafter_language");
+    if (savedLang) setSelectedLanguage(savedLang);
   }, [trackEvent]);
+
+  const handleLanguageSelect = useCallback((lang: SupportedLanguage) => {
+    setSelectedLanguage(lang.code);
+    sessionStorage.setItem("careafter_language", lang.code);
+  }, []);
 
   const startCamera = useCallback(async () => {
     try {
@@ -92,12 +103,17 @@ export default function ScanPage() {
       const response = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64 }),
+        body: JSON.stringify({ image: base64, language: selectedLanguage }),
       });
 
       if (!response.ok) throw new Error("Extraction failed");
 
       const result = await response.json();
+
+      // Attach language to the extracted data so downstream pages know
+      if (result.data) {
+        result.data.language = selectedLanguage;
+      }
 
       // Store in sessionStorage for the confirm page
       sessionStorage.setItem("careafter_extraction", JSON.stringify(result));
@@ -106,7 +122,7 @@ export default function ScanPage() {
       setErrorMessage("Something went wrong. Please try again.");
       setState("error");
     }
-  }, [capturedImage, router]);
+  }, [capturedImage, router, selectedLanguage]);
 
   const retake = useCallback(() => {
     setCapturedImage(null);
@@ -142,6 +158,17 @@ export default function ScanPage() {
             <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
               Make sure all the text is readable. You can take multiple photos if needed.
             </p>
+
+            {/* Language Selector */}
+            <div
+              className="rounded-2xl p-4 text-left"
+              style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
+            >
+              <LanguageSelector
+                selectedLanguage={selectedLanguage}
+                onSelect={handleLanguageSelect}
+              />
+            </div>
 
             <div className="space-y-4">
               <button
@@ -262,10 +289,14 @@ export default function ScanPage() {
           <div className="text-center space-y-6">
             <div className="text-6xl animate-pulse" aria-hidden="true">✨</div>
             <h2 className="text-2xl font-bold" style={{ color: "var(--color-text)" }}>
-              Reading your discharge papers...
+              {selectedLanguage !== "en"
+                ? `Reading & translating your papers...`
+                : "Reading your discharge papers..."}
             </h2>
             <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
-              This usually takes about 10 seconds. We&apos;re extracting your medications, follow-ups, and warning signs.
+              {selectedLanguage !== "en"
+                ? `Extracting your medications, follow-ups, and warning signs — and translating into ${SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.nativeName ?? "your language"}.`
+                : "This usually takes about 10 seconds. We're extracting your medications, follow-ups, and warning signs."}
             </p>
             <div
               className="mx-auto h-2 w-48 overflow-hidden rounded-full"

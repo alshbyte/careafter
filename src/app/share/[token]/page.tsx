@@ -22,6 +22,7 @@
 
 import { useEffect, useState } from "react";
 import type { DischargeData } from "@/types";
+import { SUPPORTED_LANGUAGES } from "@/types";
 import { decodeShareLink } from "@/lib/sharing/share-link";
 
 /** The share page has three possible states */
@@ -156,6 +157,17 @@ export default function SharedCarePlanPage() {
           <p className="text-sm text-white/80">Care Plan for</p>
           <h1 className="text-2xl font-bold text-white">
             {data.patientFirstName ?? "Patient"}
+            {data.language && data.language !== "en" && (() => {
+              const lang = SUPPORTED_LANGUAGES.find(l => l.code === data.language);
+              return lang ? (
+                <span
+                  className="ml-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
+                  style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
+                >
+                  {lang.flag} {lang.nativeName}
+                </span>
+              ) : null;
+            })()}
           </h1>
           {data.diagnosis && (
             <p className="mt-1 text-sm text-white/70">

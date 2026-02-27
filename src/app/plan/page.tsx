@@ -3,11 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { DischargeData } from "@/types";
+import { SUPPORTED_LANGUAGES } from "@/types";
 import { useCarePlan, useNotifications, useInstallPrompt } from "@/hooks/use-careplan";
 import { downloadCalendarFile } from "@/lib/calendar/ics-generator";
 import { createShareLink } from "@/lib/sharing/share-link";
 import { saveShareLink } from "@/lib/db/careplan-store";
 import { useAnalytics } from "@/components/analytics-provider";
+import { LanguageBadge } from "@/components/language-selector";
 
 /**
  * LEARN-ALONG: The Care Plan Page
@@ -83,7 +85,7 @@ export default function CarePlanPage() {
       const res = await fetch("/api/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ term, context }),
+        body: JSON.stringify({ term, context, language: data?.language }),
       });
       const result = await res.json();
       setExplanation(result.explanation ?? "Unable to explain.");
@@ -117,6 +119,8 @@ export default function CarePlanPage() {
           <p className="text-sm text-white/80">Your Recovery Plan</p>
           <h1 className="text-2xl font-bold text-white">
             {data.patientFirstName ? `${data.patientFirstName}'s Care Plan` : "Your Care Plan"}
+            {" "}
+            <LanguageBadge languageCode={data.language} />
           </h1>
           {data.diagnosis && (
             <p className="mt-1 text-sm text-white/70">

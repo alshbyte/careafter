@@ -26,8 +26,8 @@ export default function HomePage() {
           style={{ color: "var(--color-text-secondary)" }}
         >
           Turn your discharge papers into a{" "}
-          <strong style={{ color: "var(--color-primary)" }}>personal recovery assistant</strong> — free,
-          private, and always available.
+          <strong style={{ color: "var(--color-primary)" }}>personal recovery assistant</strong> —
+          in your language, free, private, and always available.
         </p>
 
         {/* The Magic Moment CTA */}
@@ -69,8 +69,8 @@ export default function HomePage() {
           <StepCard
             step="2"
             emoji="✨"
-            title="AI Reads It For You"
-            description="We extract your medications, follow-ups, and warning signs in seconds."
+            title="AI Reads & Translates"
+            description="We extract your medications, follow-ups, and warning signs — in any of 20 languages."
           />
           <StepCard
             step="3"
@@ -86,8 +86,9 @@ export default function HomePage() {
         <h2 id="trust" className="sr-only">
           Why trust CareAfter
         </h2>
-        <div className="mx-auto grid max-w-2xl gap-6 md:grid-cols-3">
+        <div className="mx-auto grid max-w-2xl gap-6 md:grid-cols-4">
           <TrustBadge emoji="🔒" text="Encrypted on your device, deleted from our servers" />
+          <TrustBadge emoji="🌍" text="Available in 20 languages" />
           <TrustBadge emoji="🚫" text="No ads. No data selling. Ever." />
           <TrustBadge emoji="💚" text="Free for every patient" />
         </div>

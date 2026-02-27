@@ -10,13 +10,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { term, context } = await request.json();
+    const { term, context, language } = await request.json();
 
     if (!term || typeof term !== "string") {
       return NextResponse.json({ error: "No term provided" }, { status: 400 });
     }
 
-    const explanation = await explainTerm(term, context ?? "", apiKey, endpoint);
+    const explanation = await explainTerm(term, context ?? "", apiKey, endpoint, language);
 
     return NextResponse.json({
       term,
