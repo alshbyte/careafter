@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
+import { AnalyticsProvider } from "@/components/analytics-provider";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export const metadata: Metadata = {
   title: "CareAfter — Your Recovery Assistant",
@@ -35,10 +37,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className="min-h-screen antialiased">
-        <a href="#main" className="skip-link">
-          Skip to main content
-        </a>
-        <main id="main">{children}</main>
+        <AnalyticsProvider>
+          <a href="#main" className="skip-link">
+            Skip to main content
+          </a>
+          <ErrorBoundary>
+            <main id="main">{children}</main>
+          </ErrorBoundary>
+        </AnalyticsProvider>
       </body>
     </html>
   );

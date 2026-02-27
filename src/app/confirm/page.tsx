@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { DischargeData, Medication, FollowUp, WarningSign, Restriction } from "@/types";
 import Link from "next/link";
+import { useAnalytics } from "@/components/analytics-provider";
 
 const CONFIDENCE_STYLES = {
   high: { bg: "#DCFCE7", border: "#16A34A", label: "✅ High confidence" },
@@ -15,6 +16,7 @@ export default function ConfirmPage() {
   const router = useRouter();
   const [data, setData] = useState<DischargeData | null>(null);
   const [processingTime, setProcessingTime] = useState(0);
+  const { trackEvent } = useAnalytics();
 
   useEffect(() => {
     const stored = sessionStorage.getItem("careafter_extraction");
@@ -33,11 +35,15 @@ export default function ConfirmPage() {
 
   const confirmAndCreatePlan = useCallback(() => {
     if (!data) return;
+    trackEvent("plan_confirmed", {
+      medicationCount: data.medications?.length ?? 0,
+      followUpCount: data.followUps?.length ?? 0,
+    });
     // Store confirmed data and navigate to care plan
     sessionStorage.setItem("careafter_confirmed", JSON.stringify(data));
     sessionStorage.removeItem("careafter_extraction");
     router.push("/plan");
-  }, [data, router]);
+  }, [data, router, trackEvent]);
 
   if (!data) {
     return (

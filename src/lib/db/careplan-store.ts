@@ -25,15 +25,22 @@
  * - App works fully offline after the initial AI extraction
  */
 
-import type { CarePlan, DischargeData, MedicationReminder, FollowUpStatus } from "@/types";
+import type { CarePlan, DischargeData, MedicationReminder, FollowUpStatus, ShareLink } from "@/types";
 import { generateEncryptionKey, exportKey, importKey, encrypt, decrypt, generateToken } from "@/lib/crypto/encryption";
 
 const DB_NAME = "careafter";
-const DB_VERSION = 1;
+/**
+ * LEARN: Bumped from 1 → 2 to add the "shareLinks" object store.
+ * IndexedDB versioning ensures existing users get the schema migration
+ * automatically — the onupgradeneeded callback handles both fresh installs
+ * (no existing stores) and upgrades (only creates missing stores).
+ */
+const DB_VERSION = 2;
 const STORES = {
   carePlans: "carePlans",   // Encrypted care plan data
   keys: "keys",             // Encryption key storage
   reminders: "reminders",   // Medication reminder state
+  shareLinks: "shareLinks", // Share link metadata (not encrypted — no PHI)
 } as const;
 
 /**
@@ -60,6 +67,11 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORES.reminders)) {
         db.createObjectStore(STORES.reminders, { keyPath: "medicationId" });
+      }
+      // v2: share link tracking (token, expiry, access count)
+      if (!db.objectStoreNames.contains(STORES.shareLinks)) {
+        const store = db.createObjectStore(STORES.shareLinks, { keyPath: "token" });
+        store.createIndex("carePlanId", "carePlanId", { unique: false });
       }
     };
 
@@ -257,6 +269,43 @@ function createMedicationSchedule(data: DischargeData): MedicationReminder[] {
       scheduledTimes: times,
       taken: {},
     };
+  });
+}
+
+/**
+ * Save share link metadata to IndexedDB.
+ *
+ * LEARN: Share link metadata (token, expiry, label) does NOT contain PHI,
+ * so we store it unencrypted for simplicity. The actual care plan data
+ * travels in the URL hash, not in IndexedDB.
+ */
+export async function saveShareLink(link: ShareLink): Promise<void> {
+  const db = await openDB();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORES.shareLinks, "readwrite");
+    const store = tx.objectStore(STORES.shareLinks);
+    store.put(link);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/**
+ * Get all share links for a given care plan.
+ *
+ * LEARN: We use an IndexedDB index on carePlanId to efficiently query
+ * share links for a specific plan. This lets the UI show "You've shared
+ * this plan 3 times" if needed.
+ */
+export async function getShareLinks(planId: string): Promise<ShareLink[]> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORES.shareLinks, "readonly");
+    const store = tx.objectStore(STORES.shareLinks);
+    const index = store.index("carePlanId");
+    const request = index.getAll(planId);
+    request.onsuccess = () => resolve(request.result as ShareLink[]);
+    request.onerror = () => reject(request.error);
   });
 }
 

@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import type { DischargeData } from "@/types";
 import { useCarePlan, useNotifications, useInstallPrompt } from "@/hooks/use-careplan";
 import { downloadCalendarFile } from "@/lib/calendar/ics-generator";
+import { createShareLink } from "@/lib/sharing/share-link";
+import { saveShareLink } from "@/lib/db/careplan-store";
+import { useAnalytics } from "@/components/analytics-provider";
 
 /**
  * LEARN-ALONG: The Care Plan Page
@@ -35,9 +38,13 @@ export default function CarePlanPage() {
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [medsTaken, setMedsTaken] = useState<Record<string, boolean>>({});
   const [calendarAdded, setCalendarAdded] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const { plan, savePlan } = useCarePlan();
   const { permission, requestPermission, startReminders, pushSubscribed } = useNotifications();
   const { canInstall, isInstalled, install, isIOS } = useInstallPrompt();
+  const { trackEvent } = useAnalytics();
 
   // Load data: prefer encrypted IndexedDB, fall back to sessionStorage
   useEffect(() => {
@@ -71,6 +78,7 @@ export default function CarePlanPage() {
   const handleExplain = async (term: string, context: string) => {
     setExplaining(term);
     setExplanation("Thinking...");
+    trackEvent("medication_explained", { term });
     try {
       const res = await fetch("/api/explain", {
         method: "POST",
@@ -177,6 +185,10 @@ export default function CarePlanPage() {
                     dischargeDate: data.dischargeDate,
                   });
                   setCalendarAdded(true);
+                  trackEvent("calendar_added", {
+                    medicationCount: data.medications?.length ?? 0,
+                    followUpCount: data.followUps?.length ?? 0,
+                  });
                 }}
                 className="rounded-xl px-5 py-3 text-base font-semibold text-white"
                 style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
@@ -509,6 +521,165 @@ export default function CarePlanPage() {
           </div>
         )}
       </div>
+
+      {/* ── Share with Caregiver Section ──
+          LEARN: This section sits above the footer, always visible after scrolling.
+          We generate the share link on-demand (not on page load) to avoid
+          creating links the user never intended to share. */}
+      <div className="mx-auto max-w-2xl px-6 pb-6">
+        <div
+          className="rounded-2xl p-5"
+          style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
+        >
+          <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
+            👥 Share with a Caregiver
+          </h3>
+          <p className="mt-2 text-base" style={{ color: "var(--color-text-secondary)" }}>
+            Send a read-only view of your care plan to a family member or caregiver so they can help with your recovery.
+          </p>
+          <button
+            onClick={() => {
+              if (!data) return;
+              const { url, shareLink } = createShareLink(
+                data,
+                data.patientFirstName
+                  ? `${data.patientFirstName}'s care plan`
+                  : "Shared care plan"
+              );
+              // Persist share link metadata (token, expiry) to IndexedDB
+              if (plan?.id) {
+                saveShareLink({ ...shareLink, carePlanId: plan.id }).catch(() => {
+                  // Non-critical — the share link still works without persistence
+                });
+              }
+              setShareUrl(url);
+              setShareCopied(false);
+              setShowShareDialog(true);
+              trackEvent("share_link_created");
+            }}
+            className="mt-4 rounded-xl px-5 py-3 text-base font-semibold text-white"
+            style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
+          >
+            👥 Share with Caregiver
+          </button>
+        </div>
+      </div>
+
+      {/* Share Dialog (Modal) — shown when user generates a share link
+          LEARN: We use a simple div overlay instead of <dialog> for broader
+          browser support. The backdrop click closes it, and Escape key
+          is handled via onKeyDown. */}
+      {showShareDialog && shareUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowShareDialog(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowShareDialog(false);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Share care plan link"
+        >
+          <div
+            className="w-full max-w-md rounded-t-2xl p-6 sm:rounded-2xl"
+            style={{ backgroundColor: "var(--color-surface)" }}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
+                🔗 Your share link
+              </h3>
+              <button
+                onClick={() => setShowShareDialog(false)}
+                className="rounded-lg px-3 py-2 text-xl"
+                style={{ color: "var(--color-text-muted)", minHeight: "var(--touch-target)", minWidth: "var(--touch-target)" }}
+                aria-label="Close share dialog"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Selectable link display */}
+            <div
+              className="w-full select-all overflow-x-auto rounded-lg p-3 text-sm break-all"
+              style={{
+                backgroundColor: "var(--color-surface-alt)",
+                color: "var(--color-text-secondary)",
+                border: "1px solid var(--color-border)",
+                userSelect: "all",
+              }}
+            >
+              {shareUrl}
+            </div>
+
+            {/* Action buttons */}
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    setShareCopied(true);
+                    setTimeout(() => setShareCopied(false), 3000);
+                  } catch {
+                    // Fallback: select the text so user can copy manually
+                    const el = document.querySelector("[class*='select-all']") as HTMLElement;
+                    if (el) {
+                      const range = document.createRange();
+                      range.selectNodeContents(el);
+                      window.getSelection()?.removeAllRanges();
+                      window.getSelection()?.addRange(range);
+                    }
+                  }
+                }}
+                className="flex-1 rounded-xl px-5 py-3 text-base font-semibold text-white"
+                style={{ backgroundColor: shareCopied ? "var(--color-safe)" : "var(--color-primary)", minHeight: "var(--touch-target)" }}
+              >
+                {shareCopied ? "✅ Copied!" : "📋 Copy Link"}
+              </button>
+
+              {/* Web Share API — available on mobile and some desktops
+                  LEARN: navigator.share() opens the native share sheet (iMessage,
+                  WhatsApp, email, etc.). We check for its existence because it's
+                  not available on all browsers (notably Firefox desktop). */}
+              {typeof navigator !== "undefined" && !!navigator.share && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.share({
+                        title: "Care Plan",
+                        text: `Here's ${data?.patientFirstName ? data.patientFirstName + "'s" : "a"} care plan from CareAfter`,
+                        url: shareUrl,
+                      });
+                    } catch {
+                      // User cancelled the share sheet — that's fine
+                    }
+                  }}
+                  className="flex-1 rounded-xl px-5 py-3 text-base font-semibold"
+                  style={{
+                    backgroundColor: "var(--color-surface-alt)",
+                    color: "var(--color-primary)",
+                    border: "1px solid var(--color-primary)",
+                    minHeight: "var(--touch-target)",
+                  }}
+                >
+                  📤 Share via...
+                </button>
+              )}
+            </div>
+
+            {/* Privacy and expiry notes */}
+            <div className="mt-4 space-y-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <p>⏰ This link expires in 48 hours.</p>
+              <p>
+                🔒 The link contains your care plan data — share it only with people you trust.
+                No data is stored on any server.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Disclaimer Footer */}
       <footer className="px-6 py-6 text-center text-xs" style={{ color: "var(--color-text-muted)" }}>

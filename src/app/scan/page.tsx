@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAnalytics } from "@/components/analytics-provider";
 
 type CaptureState = "idle" | "camera" | "preview" | "uploading" | "error";
 
@@ -15,6 +16,12 @@ export default function ScanPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const router = useRouter();
+  const { trackEvent } = useAnalytics();
+
+  // Track scan_started when the page mounts
+  useEffect(() => {
+    trackEvent("scan_started");
+  }, [trackEvent]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -53,7 +60,8 @@ export default function ScanPage() {
     setCapturedImage(dataUrl);
     stopCamera();
     setState("preview");
-  }, [stopCamera]);
+    trackEvent("scan_completed", { method: "camera" });
+  }, [stopCamera, trackEvent]);
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,9 +77,10 @@ export default function ScanPage() {
     reader.onload = () => {
       setCapturedImage(reader.result as string);
       setState("preview");
+      trackEvent("scan_completed", { method: "upload" });
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [trackEvent]);
 
   const submitForExtraction = useCallback(async () => {
     if (!capturedImage) return;
