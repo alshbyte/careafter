@@ -83,9 +83,9 @@ export default function ConfirmPage() {
         </div>
 
         {/* Medications */}
-        {data.medications?.length > 0 && (
-          <Section title="💊 Medications" count={data.medications.length}>
-            {data.medications.map((med, i) => (
+        {(data.medications?.length ?? 0) > 0 && (
+          <Section title="💊 Medications" count={data.medications?.length ?? 0}>
+            {data.medications?.map((med, i) => (
               <ConfidenceCard key={med.id ?? i} confidence={med.confidence}>
                 <h4 className="text-lg font-semibold" style={{ color: "var(--color-text)" }}>
                   {med.name}
@@ -116,9 +116,9 @@ export default function ConfirmPage() {
         )}
 
         {/* Follow-ups */}
-        {data.followUps?.length > 0 && (
-          <Section title="📅 Follow-Up Appointments" count={data.followUps.length}>
-            {data.followUps.map((fu, i) => (
+        {(data.followUps?.length ?? 0) > 0 && (
+          <Section title="📅 Follow-Up Appointments" count={data.followUps?.length ?? 0}>
+            {data.followUps?.map((fu, i) => (
               <ConfidenceCard key={fu.id ?? i} confidence={fu.confidence}>
                 <h4 className="text-lg font-semibold" style={{ color: "var(--color-text)" }}>
                   {fu.provider}
@@ -146,9 +146,9 @@ export default function ConfirmPage() {
         )}
 
         {/* Warning Signs */}
-        {data.warningsSigns?.length > 0 && (
-          <Section title="⚠️ Warning Signs to Watch For" count={data.warningsSigns.length}>
-            {data.warningsSigns.map((ws, i) => (
+        {(data.warningsSigns?.length ?? 0) > 0 && (
+          <Section title="⚠️ Warning Signs to Watch For" count={data.warningsSigns?.length ?? 0}>
+            {data.warningsSigns?.map((ws, i) => (
               <ConfidenceCard key={ws.id ?? i} confidence={ws.confidence}>
                 <div className="flex items-start gap-3">
                   <span className="text-2xl" aria-hidden="true">
@@ -179,9 +179,9 @@ export default function ConfirmPage() {
         )}
 
         {/* Restrictions */}
-        {data.restrictions?.length > 0 && (
-          <Section title="🚫 Restrictions" count={data.restrictions.length}>
-            {data.restrictions.map((r, i) => (
+        {(data.restrictions?.length ?? 0) > 0 && (
+          <Section title="🚫 Restrictions" count={data.restrictions?.length ?? 0}>
+            {data.restrictions?.map((r, i) => (
               <ConfidenceCard key={r.id ?? i} confidence={r.confidence}>
                 <p className="font-semibold" style={{ color: "var(--color-text)" }}>
                   {r.description}
@@ -191,6 +191,19 @@ export default function ConfirmPage() {
                     Duration: {r.duration}
                   </p>
                 )}
+              </ConfidenceCard>
+            ))}
+          </Section>
+        )}
+
+        {/* Activity Restrictions (alternative format from AI) */}
+        {!data.restrictions?.length && (data.activityRestrictions?.length ?? 0) > 0 && (
+          <Section title="🚫 Restrictions" count={data.activityRestrictions?.length ?? 0}>
+            {data.activityRestrictions?.map((r, i) => (
+              <ConfidenceCard key={i} confidence="medium">
+                <p className="font-semibold" style={{ color: "var(--color-text)" }}>
+                  {r}
+                </p>
               </ConfidenceCard>
             ))}
           </Section>
@@ -232,10 +245,19 @@ function ConfidenceCard({
   confidence,
   children,
 }: {
-  confidence: "high" | "medium" | "low";
+  confidence: number | "high" | "medium" | "low" | undefined;
   children: React.ReactNode;
 }) {
-  const style = CONFIDENCE_STYLES[confidence];
+  // Convert numeric confidence (0-1) to category
+  let level: "high" | "medium" | "low";
+  if (typeof confidence === "string" && confidence in CONFIDENCE_STYLES) {
+    level = confidence as "high" | "medium" | "low";
+  } else if (typeof confidence === "number") {
+    level = confidence >= 0.8 ? "high" : confidence >= 0.6 ? "medium" : "low";
+  } else {
+    level = "medium"; // Default for missing confidence
+  }
+  const style = CONFIDENCE_STYLES[level];
   return (
     <div
       className="rounded-xl border-l-4 p-4"

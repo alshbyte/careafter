@@ -44,18 +44,20 @@ export interface Restriction {
   confidence: ConfidenceLevel;
 }
 
-/** Confidence level from AI extraction */
-export type ConfidenceLevel = "high" | "medium" | "low";
+/** Confidence level from AI extraction — can be string category or numeric score */
+export type ConfidenceLevel = "high" | "medium" | "low" | number;
 
 /** Complete extracted data from a discharge summary */
 export interface DischargeData {
   patientFirstName?: string;
   dischargeDate?: string;
   diagnosis?: string;
+  overallConfidence?: number;
   medications: Medication[];
   followUps: FollowUp[];
   warningsSigns: WarningSign[];
-  restrictions: Restriction[];
+  restrictions?: Restriction[];
+  activityRestrictions?: string[];
   additionalNotes?: string;
   rawText?: string;
 }
