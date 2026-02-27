@@ -106,6 +106,7 @@ function stripForSharing(data: DischargeData): Record<string, unknown> {
     })),
     activityRestrictions: data.activityRestrictions,
     additionalNotes: data.additionalNotes,
+    language: data.language,
     // rawText is intentionally excluded — large and unnecessary
     // confidence fields are stripped from each item above
   };
@@ -226,6 +227,7 @@ export function decodeShareLink(hash: string): { data: DischargeData; expiresAt:
         : undefined,
       activityRestrictions: raw.activityRestrictions as string[] | undefined,
       additionalNotes: raw.additionalNotes as string | undefined,
+      language: raw.language as string | undefined,
     };
 
     return { data, expiresAt: payload.exp };
