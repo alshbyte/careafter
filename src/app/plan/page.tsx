@@ -1,9 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import type { DischargeData } from "@/types";
+import { useCarePlan, useNotifications, useInstallPrompt } from "@/hooks/use-careplan";
+
+/**
+ * LEARN-ALONG: The Care Plan Page
+ * =================================
+ * 
+ * This page demonstrates several important patterns:
+ * 
+ * 1. DATA LOADING PRIORITY:
+ *    First check IndexedDB (encrypted, persistent) →
+ *    Then check sessionStorage (temporary, from confirmation page) →
+ *    If neither exists, redirect to scan
+ * 
+ * 2. PROGRESSIVE ENHANCEMENT:
+ *    The page works without notifications or PWA install.
+ *    These are offered as optional enhancements with clear value props.
+ * 
+ * 3. NOTIFICATION DOUBLE OPT-IN:
+ *    We show our own UI explaining WHY before triggering the browser prompt.
+ *    This increases permission grant rates from ~30% to ~80%.
+ */
 
 export default function CarePlanPage() {
   const router = useRouter();
@@ -11,15 +31,41 @@ export default function CarePlanPage() {
   const [activeTab, setActiveTab] = useState<"meds" | "followups" | "warnings">("meds");
   const [explaining, setExplaining] = useState<string | null>(null);
   const [explanation, setExplanation] = useState<string>("");
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
+  const [medsTaken, setMedsTaken] = useState<Record<string, boolean>>({});
 
+  const { plan, savePlan } = useCarePlan();
+  const { permission, requestPermission, startReminders } = useNotifications();
+  const { canInstall, isInstalled, install, isIOS } = useInstallPrompt();
+
+  // Load data: prefer encrypted IndexedDB, fall back to sessionStorage
   useEffect(() => {
+    if (plan) {
+      setData(plan.dischargeData);
+      setMedsTaken(
+        plan.medicationSchedule.reduce((acc, s) => ({ ...acc, ...s.taken }), {})
+      );
+      return;
+    }
+
     const stored = sessionStorage.getItem("careafter_confirmed");
     if (!stored) {
       router.push("/scan");
       return;
     }
-    setData(JSON.parse(stored));
-  }, [router]);
+    const parsed = JSON.parse(stored) as DischargeData;
+    setData(parsed);
+
+    // Save to encrypted IndexedDB for persistence
+    savePlan(parsed).then(() => {
+      sessionStorage.removeItem("careafter_confirmed");
+    });
+
+    // Show notification prompt after a brief delay (don't overwhelm)
+    if (permission === "default") {
+      setTimeout(() => setShowNotifPrompt(true), 3000);
+    }
+  }, [plan, router, savePlan, permission]);
 
   const handleExplain = async (term: string, context: string) => {
     setExplaining(term);
@@ -107,6 +153,84 @@ export default function CarePlanPage() {
 
       {/* Content */}
       <div className="mx-auto max-w-2xl px-6 py-6">
+        {/* Notification Opt-In Banner (double opt-in pattern) */}
+        {showNotifPrompt && permission === "default" && (
+          <div
+            className="mb-6 rounded-2xl border-2 p-5"
+            style={{ borderColor: "var(--color-primary)", backgroundColor: "var(--color-surface)" }}
+          >
+            <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
+              💊 Want medication reminders?
+            </h3>
+            <p className="mt-2 text-base" style={{ color: "var(--color-text-secondary)" }}>
+              We&apos;ll send you a gentle reminder each time it&apos;s time to take your medication.
+              You can turn this off anytime.
+            </p>
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={async () => {
+                  const result = await requestPermission();
+                  if (result === "granted" && data) {
+                    startReminders(
+                      (data.medications ?? []).map((m) => ({
+                        id: m.id,
+                        name: m.name,
+                        dosage: m.dosage,
+                        scheduledTimes: plan?.medicationSchedule?.find(
+                          (s) => s.medicationId === m.id
+                        )?.scheduledTimes ?? ["08:00"],
+                      }))
+                    );
+                  }
+                  setShowNotifPrompt(false);
+                }}
+                className="rounded-xl px-5 py-3 text-base font-semibold text-white"
+                style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
+              >
+                ✅ Yes, remind me
+              </button>
+              <button
+                onClick={() => setShowNotifPrompt(false)}
+                className="rounded-xl px-5 py-3 text-base"
+                style={{ color: "var(--color-text-muted)", minHeight: "var(--touch-target)" }}
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* PWA Install Banner */}
+        {canInstall && !isInstalled && (
+          <div
+            className="mb-6 rounded-2xl p-5"
+            style={{ backgroundColor: "var(--color-surface-alt)" }}
+          >
+            <p className="text-base font-medium" style={{ color: "var(--color-text)" }}>
+              📱 Add CareAfter to your home screen for quick access — works offline too!
+            </p>
+            <button
+              onClick={install}
+              className="mt-3 rounded-xl px-5 py-3 text-base font-semibold text-white"
+              style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
+            >
+              Install CareAfter
+            </button>
+          </div>
+        )}
+
+        {/* iOS Install Instructions */}
+        {isIOS && !isInstalled && (
+          <div
+            className="mb-6 rounded-2xl p-5"
+            style={{ backgroundColor: "var(--color-surface-alt)" }}
+          >
+            <p className="text-base" style={{ color: "var(--color-text)" }}>
+              📱 To install: tap the <strong>Share</strong> button (↑) in Safari, then <strong>Add to Home Screen</strong>.
+            </p>
+          </div>
+        )}
+
         {/* Medications Tab */}
         {activeTab === "meds" && (
           <div className="space-y-4">

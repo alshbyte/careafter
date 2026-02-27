@@ -41,7 +41,7 @@ export default function HomePage() {
         </Link>
 
         <p className="text-base" style={{ color: "var(--color-text-muted)" }}>
-          No account needed · Free forever · Your data stays on your phone
+          No account needed · Free forever · Your care plan is encrypted on your device
         </p>
       </section>
 
@@ -87,7 +87,7 @@ export default function HomePage() {
           Why trust CareAfter
         </h2>
         <div className="mx-auto grid max-w-2xl gap-6 md:grid-cols-3">
-          <TrustBadge emoji="🔒" text="Your data never leaves your phone" />
+          <TrustBadge emoji="🔒" text="Encrypted on your device, deleted from our servers" />
           <TrustBadge emoji="🚫" text="No ads. No data selling. Ever." />
           <TrustBadge emoji="💚" text="Free for every patient" />
         </div>
