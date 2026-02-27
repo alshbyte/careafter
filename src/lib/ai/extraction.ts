@@ -1,6 +1,9 @@
-// AI extraction service — calls Azure OpenAI GPT-4o Vision to parse discharge summaries
+// AI extraction service — calls Google Gemini Flash to parse discharge summaries
+// Supports pluggable models via GEMINI_MODEL env var (default: gemini-2.0-flash)
 
 import type { DischargeData, ConfidenceLevel } from "@/types";
+
+const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 /**
  * Build the system prompt, optionally instructing translation.
@@ -67,56 +70,56 @@ export interface ExtractionResult {
 export async function extractDischargeData(
   imageBase64: string,
   apiKey: string,
-  endpoint: string,
   language?: string
 ): Promise<ExtractionResult> {
   const startTime = Date.now();
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
 
   try {
-    const response = await fetch(`${endpoint}/openai/deployments/gpt-4o/chat/completions?api-version=2024-10-21`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api-key": apiKey,
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: "system", content: buildSystemPrompt(language) },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: buildExtractionPrompt(language) },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${imageBase64}`,
-                  detail: "high",
-                },
-              },
-            ],
+    const response = await fetch(
+      `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: buildSystemPrompt(language) }],
           },
-        ],
-        max_tokens: 4096,
-        temperature: 0.1, // low temperature for factual extraction
-        response_format: { type: "json_object" },
-      }),
-    });
+          contents: [
+            {
+              parts: [
+                { text: buildExtractionPrompt(language) },
+                {
+                  inlineData: {
+                    mimeType: "image/jpeg",
+                    data: imageBase64,
+                  },
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 4096,
+            responseMimeType: "application/json",
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Azure OpenAI API error: ${response.status} ${errorText}`);
+      throw new Error(`Gemini API error: ${response.status} ${errorText}`);
     }
 
     const result = await response.json();
-    const content = result.choices?.[0]?.message?.content;
+    const content = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!content) {
-      throw new Error("No content in API response");
+      throw new Error("No content in Gemini API response");
     }
 
     const parsed = JSON.parse(content) as DischargeData;
-
-    // Assign IDs to all items
     const withIds = assignIds(parsed);
 
     return {
@@ -138,9 +141,9 @@ export async function explainTerm(
   term: string,
   context: string,
   apiKey: string,
-  endpoint: string,
   language?: string
 ): Promise<string> {
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
   const langName = language && language !== "en" ? getLanguageNameForAI(language) : null;
   const langInstruction = langName
     ? `Respond ENTIRELY in ${langName}. `
@@ -149,34 +152,45 @@ export async function explainTerm(
     ? `Always end with the equivalent of "Ask your doctor or pharmacist if you have questions about ${term}" in ${langName}.`
     : `Always end with: "Ask your doctor or pharmacist if you have questions about ${term}."`;
 
-  const response = await fetch(`${endpoint}/openai/deployments/gpt-4o/chat/completions?api-version=2024-10-21`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api-key": apiKey,
-    },
-    body: JSON.stringify({
-      messages: [
-        {
-          role: "system",
-          content: `${langInstruction}You explain medical terms in simple, plain language at a 6th-grade reading level. 
+  const response = await fetch(
+    `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: `${langInstruction}You explain medical terms in simple, plain language at a 6th-grade reading level. 
 Keep explanations under 2 sentences. Only explain based on the context provided from the patient's own discharge document.
 ${askDoctor}`,
+            },
+          ],
         },
-        {
-          role: "user",
-          content: `Explain "${term}" in simple language. Context from the patient's discharge document: "${context}"`,
+        contents: [
+          {
+            parts: [
+              {
+                text: `Explain "${term}" in simple language. Context from the patient's discharge document: "${context}"`,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 200,
         },
-      ],
-      max_tokens: 200,
-      temperature: 0.2,
-    }),
-  });
+      }),
+    }
+  );
 
   if (!response.ok) throw new Error("Failed to get explanation");
 
   const result = await response.json();
-  return result.choices?.[0]?.message?.content ?? "Unable to explain this term.";
+  return (
+    result.candidates?.[0]?.content?.parts?.[0]?.text ??
+    "Unable to explain this term."
+  );
 }
 
 function assignIds(data: DischargeData): DischargeData {

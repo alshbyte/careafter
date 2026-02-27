@@ -37,7 +37,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' blob: data:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.openai.azure.com https://*.supabase.co",
+      "connect-src 'self' https://generativelanguage.googleapis.com https://*.supabase.co",
       "media-src 'self' blob:",
       "worker-src 'self' blob:",
     ].join("; "),

@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { explainTerm } from "@/lib/ai/extraction";
 
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.AZURE_OPENAI_API_KEY;
-  const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+  const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!apiKey || !endpoint) {
+  if (!apiKey) {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   }
 
@@ -16,7 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No term provided" }, { status: 400 });
     }
 
-    const explanation = await explainTerm(term, context ?? "", apiKey, endpoint, language);
+    const explanation = await explainTerm(term, context ?? "", apiKey, language);
 
     return NextResponse.json({
       term,

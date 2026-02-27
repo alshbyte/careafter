@@ -29,11 +29,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate environment
-  const apiKey = process.env.AZURE_OPENAI_API_KEY;
-  const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+  const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!apiKey || !endpoint) {
-    console.error("Missing Azure OpenAI configuration");
+  if (!apiKey) {
+    console.error("Missing GEMINI_API_KEY");
     return NextResponse.json(
       { success: false, error: "Service temporarily unavailable." },
       { status: 503 }
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await extractDischargeData(image, apiKey, endpoint, language);
+    const result = await extractDischargeData(image, apiKey, language);
 
     if (!result.success) {
       return NextResponse.json(
