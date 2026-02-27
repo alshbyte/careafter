@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { DischargeData } from "@/types";
 import { useCarePlan, useNotifications, useInstallPrompt } from "@/hooks/use-careplan";
+import { downloadCalendarFile } from "@/lib/calendar/ics-generator";
 
 /**
  * LEARN-ALONG: The Care Plan Page
@@ -33,7 +34,7 @@ export default function CarePlanPage() {
   const [explanation, setExplanation] = useState<string>("");
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [medsTaken, setMedsTaken] = useState<Record<string, boolean>>({});
-
+  const [calendarAdded, setCalendarAdded] = useState(false);
   const { plan, savePlan } = useCarePlan();
   const { permission, requestPermission, startReminders, pushSubscribed } = useNotifications();
   const { canInstall, isInstalled, install, isIOS } = useInstallPrompt();
@@ -153,6 +154,82 @@ export default function CarePlanPage() {
 
       {/* Content */}
       <div className="mx-auto max-w-2xl px-6 py-6">
+        {/* 📅 Add to Calendar — the simplest, most reliable reminder method */}
+        {!calendarAdded && (data.medications?.length ?? 0) > 0 && (
+          <div
+            className="mb-6 rounded-2xl border-2 p-5"
+            style={{ borderColor: "var(--color-primary)", backgroundColor: "var(--color-surface)" }}
+          >
+            <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
+              📅 Add reminders to your calendar?
+            </h3>
+            <p className="mt-2 text-base" style={{ color: "var(--color-text-secondary)" }}>
+              Your phone&apos;s calendar will remind you to take each medication at the right time —
+              even when your phone is locked. Works with Apple Calendar, Google Calendar, and Outlook.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={() => {
+                  downloadCalendarFile({
+                    medications: data.medications,
+                    followUps: data.followUps,
+                    patientName: data.patientFirstName,
+                    dischargeDate: data.dischargeDate,
+                  });
+                  setCalendarAdded(true);
+                }}
+                className="rounded-xl px-5 py-3 text-base font-semibold text-white"
+                style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
+              >
+                📅 Add to Calendar
+              </button>
+              <button
+                onClick={() => setCalendarAdded(true)}
+                className="rounded-xl px-5 py-3 text-base"
+                style={{ color: "var(--color-text-muted)", minHeight: "var(--touch-target)" }}
+              >
+                Not now
+              </button>
+            </div>
+            <p className="mt-3 text-xs" style={{ color: "var(--color-text-muted)" }}>
+              📝 Includes {data.medications?.length} medication reminder{(data.medications?.length ?? 0) !== 1 ? "s" : ""}
+              {(data.followUps?.length ?? 0) > 0 && ` and ${data.followUps?.length} follow-up appointment${(data.followUps?.length ?? 0) !== 1 ? "s" : ""}`}
+            </p>
+          </div>
+        )}
+
+        {/* Calendar Added Success Badge */}
+        {calendarAdded && (
+          <div
+            className="mb-6 flex items-center gap-3 rounded-2xl p-4"
+            style={{ backgroundColor: "var(--color-surface)" }}
+          >
+            <span className="text-2xl">📅</span>
+            <div>
+              <p className="font-semibold" style={{ color: "var(--color-text)" }}>
+                Reminders added to your calendar
+              </p>
+              <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+                Open your calendar app to confirm the events were added
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                downloadCalendarFile({
+                  medications: data.medications,
+                  followUps: data.followUps,
+                  patientName: data.patientFirstName,
+                  dischargeDate: data.dischargeDate,
+                });
+              }}
+              className="ml-auto rounded-lg px-3 py-2 text-sm font-medium"
+              style={{ color: "var(--color-primary)" }}
+            >
+              Download again
+            </button>
+          </div>
+        )}
+
         {/* Notification Opt-In Banner (double opt-in pattern) */}
         {showNotifPrompt && permission === "default" && (
           <div
