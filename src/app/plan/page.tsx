@@ -1,0 +1,303 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import type { DischargeData } from "@/types";
+
+export default function CarePlanPage() {
+  const router = useRouter();
+  const [data, setData] = useState<DischargeData | null>(null);
+  const [activeTab, setActiveTab] = useState<"meds" | "followups" | "warnings">("meds");
+  const [explaining, setExplaining] = useState<string | null>(null);
+  const [explanation, setExplanation] = useState<string>("");
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("careafter_confirmed");
+    if (!stored) {
+      router.push("/scan");
+      return;
+    }
+    setData(JSON.parse(stored));
+  }, [router]);
+
+  const handleExplain = async (term: string, context: string) => {
+    setExplaining(term);
+    setExplanation("Thinking...");
+    try {
+      const res = await fetch("/api/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ term, context }),
+      });
+      const result = await res.json();
+      setExplanation(result.explanation ?? "Unable to explain.");
+    } catch {
+      setExplanation("Could not load explanation. Please try again.");
+    }
+  };
+
+  if (!data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p style={{ color: "var(--color-text-secondary)" }}>Loading your care plan...</p>
+      </div>
+    );
+  }
+
+  const tabs = [
+    { id: "meds" as const, label: "💊 Medications", count: data.medications?.length ?? 0 },
+    { id: "followups" as const, label: "📅 Follow-Ups", count: data.followUps?.length ?? 0 },
+    { id: "warnings" as const, label: "⚠️ Warnings", count: data.warningsSigns?.length ?? 0 },
+  ];
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg)" }}>
+      {/* Header */}
+      <header
+        className="px-6 py-4 shadow-sm"
+        style={{ backgroundColor: "var(--color-primary)" }}
+      >
+        <div className="mx-auto max-w-2xl">
+          <p className="text-sm text-white/80">Your Recovery Plan</p>
+          <h1 className="text-2xl font-bold text-white">
+            {data.patientFirstName ? `${data.patientFirstName}'s Care Plan` : "Your Care Plan"}
+          </h1>
+          {data.diagnosis && (
+            <p className="mt-1 text-sm text-white/70">
+              Discharged: {data.dischargeDate ?? "Recently"} · {data.diagnosis}
+            </p>
+          )}
+        </div>
+      </header>
+
+      {/* Emergency Banner */}
+      <div
+        className="px-6 py-3 text-center text-sm font-medium text-white"
+        style={{ backgroundColor: "var(--color-danger)" }}
+      >
+        ⚠️ Medical emergency?{" "}
+        <a href="tel:911" className="font-bold underline">
+          Call 911
+        </a>
+      </div>
+
+      {/* Tab Navigation */}
+      <nav className="sticky top-0 z-10 px-4 py-2 shadow-sm" style={{ backgroundColor: "var(--color-surface)" }}>
+        <div className="mx-auto flex max-w-2xl gap-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex-1 rounded-xl px-3 py-3 text-sm font-semibold transition-all"
+              style={{
+                backgroundColor: activeTab === tab.id ? "var(--color-primary)" : "transparent",
+                color: activeTab === tab.id ? "white" : "var(--color-text-secondary)",
+                minHeight: "var(--touch-target)",
+              }}
+            >
+              {tab.label}
+              {tab.count > 0 && (
+                <span className="ml-1 text-xs opacity-75">({tab.count})</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* Content */}
+      <div className="mx-auto max-w-2xl px-6 py-6">
+        {/* Medications Tab */}
+        {activeTab === "meds" && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
+              Your Medications
+            </h2>
+            {data.medications?.map((med) => (
+              <div
+                key={med.id}
+                className="rounded-2xl p-5 shadow-sm"
+                style={{ backgroundColor: "var(--color-surface)" }}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <button
+                      onClick={() => handleExplain(med.name, med.purpose ?? med.name)}
+                      className="text-lg font-bold underline decoration-dotted underline-offset-4"
+                      style={{ color: "var(--color-primary)" }}
+                      title="Tap to learn what this medication does"
+                    >
+                      {med.name}
+                    </button>
+                    {med.genericName && (
+                      <span className="ml-2 text-sm" style={{ color: "var(--color-text-muted)" }}>
+                        ({med.genericName})
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span style={{ color: "var(--color-text-muted)" }}>Dosage: </span>
+                    <strong>{med.dosage}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: "var(--color-text-muted)" }}>Frequency: </span>
+                    <strong>{med.frequency}</strong>
+                  </div>
+                  {med.timing && (
+                    <div>
+                      <span style={{ color: "var(--color-text-muted)" }}>When: </span>
+                      <strong>{med.timing}</strong>
+                    </div>
+                  )}
+                  {med.duration && (
+                    <div>
+                      <span style={{ color: "var(--color-text-muted)" }}>Duration: </span>
+                      <strong>{med.duration}</strong>
+                    </div>
+                  )}
+                </div>
+                {med.specialInstructions && (
+                  <div
+                    className="mt-3 rounded-lg p-3 text-sm font-medium"
+                    style={{ backgroundColor: "var(--color-surface-alt)", color: "var(--color-primary)" }}
+                  >
+                    📝 {med.specialInstructions}
+                  </div>
+                )}
+
+                {/* Inline explanation */}
+                {explaining === med.name && (
+                  <div
+                    className="mt-3 rounded-lg border p-3 text-sm"
+                    style={{ borderColor: "var(--color-primary)", backgroundColor: "var(--color-surface-alt)" }}
+                  >
+                    <p style={{ color: "var(--color-text)" }}>{explanation}</p>
+                    <p className="mt-2 text-xs italic" style={{ color: "var(--color-text-muted)" }}>
+                      Based on your discharge papers. Always consult your healthcare provider.
+                    </p>
+                    <button
+                      onClick={() => setExplaining(null)}
+                      className="mt-2 text-xs underline"
+                      style={{ color: "var(--color-primary)" }}
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Follow-ups Tab */}
+        {activeTab === "followups" && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
+              Follow-Up Appointments
+            </h2>
+            {data.followUps?.map((fu) => (
+              <div
+                key={fu.id}
+                className="rounded-2xl p-5 shadow-sm"
+                style={{ backgroundColor: "var(--color-surface)" }}
+              >
+                <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
+                  {fu.provider}
+                </h3>
+                {fu.specialty && (
+                  <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+                    {fu.specialty}
+                  </p>
+                )}
+                <p className="mt-2 text-base" style={{ color: "var(--color-text-secondary)" }}>
+                  📅 Schedule within: <strong>{fu.timeframe}</strong>
+                </p>
+                {fu.reason && (
+                  <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                    Reason: {fu.reason}
+                  </p>
+                )}
+                {fu.phoneNumber && (
+                  <a
+                    href={`tel:${fu.phoneNumber}`}
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl px-4 py-3 text-base font-semibold text-white"
+                    style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
+                  >
+                    📞 Call {fu.phoneNumber}
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Warning Signs Tab */}
+        {activeTab === "warnings" && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
+              Warning Signs to Watch For
+            </h2>
+            <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
+              If you notice any of these, take the recommended action. Trust your instincts — if something
+              feels wrong, it&apos;s always OK to call your doctor.
+            </p>
+            {data.warningsSigns?.map((ws) => (
+              <div
+                key={ws.id}
+                className="rounded-2xl border-l-4 p-5 shadow-sm"
+                style={{
+                  backgroundColor: "var(--color-surface)",
+                  borderColor:
+                    ws.severity === "urgent"
+                      ? "var(--color-danger)"
+                      : ws.severity === "important"
+                      ? "#EAB308"
+                      : "var(--color-info)",
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl" aria-hidden="true">
+                    {ws.severity === "urgent" ? "🚨" : ws.severity === "important" ? "⚠️" : "ℹ️"}
+                  </span>
+                  <div>
+                    <p className="text-base font-semibold" style={{ color: "var(--color-text)" }}>
+                      {ws.description}
+                    </p>
+                    <p
+                      className="mt-2 text-base font-bold"
+                      style={{
+                        color:
+                          ws.severity === "urgent" ? "var(--color-danger)" : "var(--color-text-secondary)",
+                      }}
+                    >
+                      → {ws.action}
+                    </p>
+                    {ws.severity === "urgent" && (
+                      <a
+                        href="tel:911"
+                        className="mt-3 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-base font-bold text-white"
+                        style={{ backgroundColor: "var(--color-danger)", minHeight: "var(--touch-target)" }}
+                      >
+                        📞 Call 911 Now
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Disclaimer Footer */}
+      <footer className="px-6 py-6 text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p>
+          CareAfter does not provide medical advice, diagnosis, or treatment. This care plan is based on your
+          discharge papers. Always follow your doctor&apos;s instructions.
+        </p>
+      </footer>
+    </div>
+  );
+}

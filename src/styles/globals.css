@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+/* === CareAfter Design Tokens === */
+/* Senior-friendly: 18px base, high contrast, large touch targets */
+
+:root {
+  /* Brand colors — teal/green = healing, trust, calm */
+  --color-primary: #0F766E;       /* teal-700 */
+  --color-primary-light: #14B8A6; /* teal-500 */
+  --color-primary-dark: #0D4F4A;
+  --color-accent: #F59E0B;        /* amber-500 — warmth, attention */
+
+  /* Semantic colors */
+  --color-safe: #16A34A;          /* green-600 */
+  --color-caution: #EAB308;       /* yellow-500 */
+  --color-danger: #DC2626;        /* red-600 */
+  --color-info: #2563EB;          /* blue-600 */
+
+  /* Neutral palette — warm grays for approachability */
+  --color-bg: #FAFAF9;           /* stone-50 */
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F5F5F4;  /* stone-100 */
+  --color-border: #D6D3D1;       /* stone-300 */
+  --color-text: #1C1917;         /* stone-900 */
+  --color-text-secondary: #57534E; /* stone-600 */
+  --color-text-muted: #A8A29E;   /* stone-400 */
+
+  /* Typography — senior-friendly sizes */
+  --font-base: 1.125rem;         /* 18px */
+  --font-lg: 1.25rem;            /* 20px */
+  --font-xl: 1.5rem;             /* 24px */
+  --font-2xl: 1.875rem;          /* 30px */
+  --font-3xl: 2.25rem;           /* 36px */
+  --line-height: 1.6;
+
+  /* Spacing */
+  --touch-target: 48px;          /* WCAG minimum */
+  --radius: 12px;
+  --radius-lg: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1C1917;
+    --color-surface: #292524;
+    --color-surface-alt: #44403C;
+    --color-border: #57534E;
+    --color-text: #FAFAF9;
+    --color-text-secondary: #D6D3D1;
+    --color-text-muted: #78716C;
+  }
+}
+
+/* === Base Styles === */
+
+html {
+  font-size: var(--font-base);
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: var(--line-height);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Large touch targets for all interactive elements */
+button, a, input, select, textarea, [role="button"] {
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+}
+
+/* Focus styles — visible and high-contrast */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip to main content — accessibility */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  padding: 8px 16px;
+  background: var(--color-primary);
+  color: white;
+  z-index: 100;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* PWA-specific: prevent overscroll on iOS */
+@supports (-webkit-touch-callout: none) {
+  body {
+    overscroll-behavior-y: none;
+  }
+}
