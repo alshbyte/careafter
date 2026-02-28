@@ -66,7 +66,7 @@ export default function CarePlanPage() {
       return;
     }
 
-    const stored = sessionStorage.getItem("careafter_confirmed");
+    const stored = sessionStorage.getItem("medlens_confirmed");
     if (!stored) {
       router.push("/scan");
       return;
@@ -76,7 +76,7 @@ export default function CarePlanPage() {
 
     // Save to encrypted IndexedDB for persistence
     savePlan(parsed).then(() => {
-      sessionStorage.removeItem("careafter_confirmed");
+      sessionStorage.removeItem("medlens_confirmed");
     });
   }, [plan, planLoading, router, savePlan]);
 
@@ -454,14 +454,14 @@ export default function CarePlanPage() {
                   {canInstall && !isInstalled && (
                     <div className="rounded-xl p-4" style={{ backgroundColor: "var(--color-surface-alt)" }}>
                       <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
-                        📱 Add CareAfter to your home screen for quick access — works offline too!
+                        📱 Add MedLens to your home screen for quick access — works offline too!
                       </p>
                       <button
                         onClick={install}
                         className="mt-2 rounded-xl px-5 py-3 text-sm font-semibold text-white"
                         style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
                       >
-                        Install CareAfter
+                        Install MedLens
                       </button>
                     </div>
                   )}
@@ -1060,7 +1060,7 @@ export default function CarePlanPage() {
                     try {
                       await navigator.share({
                         title: "Care Plan",
-                        text: `Here's ${data?.patientFirstName ? data.patientFirstName + "'s" : "a"} care plan from CareAfter`,
+                        text: `Here's ${data?.patientFirstName ? data.patientFirstName + "'s" : "a"} care plan from MedLens`,
                         url: shareUrl,
                       });
                     } catch {
@@ -1095,7 +1095,7 @@ export default function CarePlanPage() {
       {/* Disclaimer Footer */}
       <footer className="px-4 py-4 text-center text-[10px]" style={{ color: "var(--color-text-muted)" }}>
         <p>
-          CareAfter does not provide medical advice, diagnosis, or treatment. This care plan is based on your
+          MedLens does not provide medical advice, diagnosis, or treatment. This care plan is based on your
           discharge papers. Always follow your doctor&apos;s instructions.
         </p>
       </footer>

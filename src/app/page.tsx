@@ -22,7 +22,7 @@ export default function HomePage() {
           className="mb-4 text-4xl font-bold tracking-tight"
           style={{ color: "var(--color-text)" }}
         >
-          CareAfter
+          MedLens
         </h1>
 
         <p
@@ -91,7 +91,7 @@ export default function HomePage() {
       {/* Trust Signals */}
       <section className="px-6 py-12" aria-labelledby="trust">
         <h2 id="trust" className="sr-only">
-          Why trust CareAfter
+          Why trust MedLens
         </h2>
         <div className="mx-auto grid max-w-2xl gap-4 sm:grid-cols-2">
           <TrustBadge emoji="🔒" text="Encrypted on your device" detail="Deleted from our servers instantly" />
@@ -120,9 +120,9 @@ export default function HomePage() {
         style={{ color: "var(--color-text-muted)" }}
       >
         <p>
-          CareAfter does not provide medical advice. Always consult your healthcare provider.
+          MedLens does not provide medical advice. Always consult your healthcare provider.
         </p>
-        <p className="mt-2">© {new Date().getFullYear()} CareAfter. All rights reserved.</p>
+        <p className="mt-2">© {new Date().getFullYear()} MedLens. All rights reserved.</p>
       </footer>
     </div>
   );

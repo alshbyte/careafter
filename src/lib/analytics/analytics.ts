@@ -1,5 +1,5 @@
 /**
- * CareAfter — Privacy-First Analytics Service
+ * MedLens — Privacy-First Analytics Service
  * =============================================
  *
  * LEARN-ALONG: Privacy by Design

@@ -5,7 +5,7 @@
  * ================================================
  *
  * This page is designed to be opened by a caregiver (family member, friend)
- * who received a share link. It does NOT require the CareAfter app — it works
+ * who received a share link. It does NOT require the MedLens app — it works
  * in any browser.
  *
  * KEY DESIGN DECISIONS:
@@ -87,14 +87,14 @@ export default function SharedCarePlanPage() {
         </h1>
         <p className="mt-2 text-base" style={{ color: "var(--color-text-secondary)", maxWidth: "28rem" }}>
           Share links expire after 48 hours for privacy protection.
-          Ask your care partner to send you a new link from their CareAfter app.
+          Ask your care partner to send you a new link from their MedLens app.
         </p>
         <a
           href="/"
           className="mt-6 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-semibold text-white"
           style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
         >
-          Learn about CareAfter
+          Learn about MedLens
         </a>
       </div>
     );
@@ -120,7 +120,7 @@ export default function SharedCarePlanPage() {
           className="mt-6 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-semibold text-white"
           style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
         >
-          Learn about CareAfter
+          Learn about MedLens
         </a>
       </div>
     );
@@ -363,7 +363,7 @@ export default function SharedCarePlanPage() {
           </section>
         )}
 
-        {/* Download CareAfter CTA */}
+        {/* Download MedLens CTA */}
         <div
           className="mb-8 rounded-2xl p-5 text-center"
           style={{ backgroundColor: "var(--color-surface-alt)" }}
@@ -372,14 +372,14 @@ export default function SharedCarePlanPage() {
             📱 Want your own recovery assistant?
           </p>
           <p className="mt-1 text-base" style={{ color: "var(--color-text-secondary)" }}>
-            CareAfter turns discharge papers into personalized care plans — free and private.
+            MedLens turns discharge papers into personalized care plans — free and private.
           </p>
           <a
             href="/"
             className="mt-4 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-semibold text-white"
             style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
           >
-            Download CareAfter
+            Download MedLens
           </a>
         </div>
       </div>
@@ -390,7 +390,7 @@ export default function SharedCarePlanPage() {
         style={{ color: "var(--color-text-muted)", borderTop: "1px solid var(--color-border)" }}
       >
         <p>
-          CareAfter does not provide medical advice, diagnosis, or treatment. This care plan was
+          MedLens does not provide medical advice, diagnosis, or treatment. This care plan was
           generated from the patient&apos;s discharge papers using AI and may contain errors.
           Always follow the healthcare provider&apos;s instructions.
         </p>

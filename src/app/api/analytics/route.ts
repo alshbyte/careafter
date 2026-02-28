@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * CareAfter — Analytics Ingestion API
+ * MedLens — Analytics Ingestion API
  * =====================================
  *
  * LEARN-ALONG: Privacy-First Analytics Endpoint

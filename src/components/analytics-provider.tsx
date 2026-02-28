@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CareAfter — Analytics Provider
+ * MedLens — Analytics Provider
  * ================================
  *
  * LEARN-ALONG: React Context for Analytics

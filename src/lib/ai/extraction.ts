@@ -16,7 +16,7 @@ function buildSystemPrompt(languageCode?: string): string {
       ? `\n6. IMPORTANT: Output ALL patient-facing text values (medication names can stay in English, but ALL descriptions, instructions, actions, purposes, reasons, timing, and notes) in ${getLanguageNameForAI(languageCode)}. Keep JSON keys in English.`
       : "";
 
-  return `You are a medical document parser for the CareAfter app. Your ONLY job is to extract structured data from discharge summaries.
+  return `You are a medical document parser for the MedLens app. Your ONLY job is to extract structured data from discharge summaries.
 
 RULES:
 1. Extract ONLY what is explicitly written in the document. Never infer or add medical advice.

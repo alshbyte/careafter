@@ -25,13 +25,13 @@ export default function ScanPage() {
   useEffect(() => {
     trackEvent("scan_started");
     // Restore language preference from sessionStorage
-    const savedLang = sessionStorage.getItem("careafter_language");
+    const savedLang = sessionStorage.getItem("medlens_language");
     if (savedLang) setSelectedLanguage(savedLang);
   }, [trackEvent]);
 
   const handleLanguageSelect = useCallback((lang: SupportedLanguage) => {
     setSelectedLanguage(lang.code);
-    sessionStorage.setItem("careafter_language", lang.code);
+    sessionStorage.setItem("medlens_language", lang.code);
   }, []);
 
   const startCamera = useCallback(async () => {
@@ -119,7 +119,7 @@ export default function ScanPage() {
       }
 
       // Store in sessionStorage for the confirm page
-      sessionStorage.setItem("careafter_extraction", JSON.stringify(result));
+      sessionStorage.setItem("medlens_extraction", JSON.stringify(result));
       router.push("/confirm");
     } catch (err) {
       const raw = err instanceof Error ? err.message : "Something went wrong";

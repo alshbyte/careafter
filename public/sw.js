@@ -1,8 +1,8 @@
-// CareAfter Service Worker v1.2.0
+// MedLens Service Worker v1.2.0
 // Handles: offline caching, push notifications, notification actions
 
 const SW_VERSION = "1.2.0";
-const CACHE_NAME = "careafter-v" + SW_VERSION;
+const CACHE_NAME = "medlens-v" + SW_VERSION;
 
 const STATIC_ASSETS = [
   "/",
@@ -57,12 +57,12 @@ self.addEventListener("fetch", function(event) {
 // Push notifications for medication reminders
 self.addEventListener("push", function(event) {
   var data = event.data ? event.data.json() : {};
-  var title = data.title || "CareAfter Reminder";
+  var title = data.title || "MedLens Reminder";
   var options = {
     body: data.body || "Time for your medication",
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
-    tag: data.tag || "careafter-reminder",
+    tag: data.tag || "medlens-reminder",
     requireInteraction: true,
     data: data,
     actions: [

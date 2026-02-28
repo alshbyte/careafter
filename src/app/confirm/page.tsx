@@ -19,7 +19,7 @@ export default function ConfirmPage() {
   const { trackEvent } = useAnalytics();
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("careafter_extraction");
+    const stored = sessionStorage.getItem("medlens_extraction");
     if (!stored) {
       router.push("/scan");
       return;
@@ -40,8 +40,8 @@ export default function ConfirmPage() {
       followUpCount: data.followUps?.length ?? 0,
     });
     // Store confirmed data and navigate to care plan
-    sessionStorage.setItem("careafter_confirmed", JSON.stringify(data));
-    sessionStorage.removeItem("careafter_extraction");
+    sessionStorage.setItem("medlens_confirmed", JSON.stringify(data));
+    sessionStorage.removeItem("medlens_extraction");
     router.push("/plan");
   }, [data, router, trackEvent]);
 

@@ -109,7 +109,7 @@ export async function showLocalNotification(
       body,
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
-      tag: tag ?? "careafter-reminder",
+      tag: tag ?? "medlens-reminder",
       requireInteraction: true, // Don't auto-dismiss — meds are important!
     } as NotificationOptions);
   } else {
@@ -179,7 +179,7 @@ export function setupInstallPrompt(): void {
     e.preventDefault(); // Don't show the default browser prompt
     deferredInstallPrompt = e;
     // Dispatch custom event so React components can show an install button
-    window.dispatchEvent(new CustomEvent("careafter:installable"));
+    window.dispatchEvent(new CustomEvent("medlens:installable"));
   });
 }
 

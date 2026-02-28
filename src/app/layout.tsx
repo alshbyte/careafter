@@ -4,17 +4,17 @@ import { AnalyticsProvider } from "@/components/analytics-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 export const metadata: Metadata = {
-  title: "CareAfter — Your Recovery Assistant",
+  title: "MedLens — Your Recovery Assistant",
   description:
     "Turn your discharge papers into a personal recovery assistant. Free, private, always available.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "CareAfter",
+    title: "MedLens",
   },
   openGraph: {
-    title: "CareAfter — Your Recovery Assistant",
+    title: "MedLens — Your Recovery Assistant",
     description: "Turn your discharge papers into a personal recovery assistant.",
     type: "website",
   },

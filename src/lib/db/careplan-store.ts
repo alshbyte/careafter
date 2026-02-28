@@ -14,7 +14,7 @@
  * - Zero-account: no login = no cloud storage to associate with
  * 
  * HOW IT WORKS:
- * 1. We open a database called "careafter" with an "object store" (like a table)
+ * 1. We open a database called "medlens" with an "object store" (like a table)
  * 2. Each care plan is stored as an encrypted blob (AES-256-GCM)
  * 3. The encryption key lives in the browser's secure storage
  * 4. When the user opens the app, we decrypt and display
@@ -28,7 +28,7 @@
 import type { CarePlan, DischargeData, MedicationReminder, FollowUpStatus, ShareLink } from "@/types";
 import { generateEncryptionKey, exportKey, importKey, encrypt, decrypt, generateToken } from "@/lib/crypto/encryption";
 
-const DB_NAME = "careafter";
+const DB_NAME = "medlens";
 /**
  * LEARN: Bumped from 1 → 2 to add the "shareLinks" object store.
  * IndexedDB versioning ensures existing users get the schema migration

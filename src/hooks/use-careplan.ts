@@ -115,7 +115,7 @@ export function useNotifications() {
     registerServiceWorker();
 
     // Check if already push-subscribed
-    const savedDeviceId = localStorage.getItem("careafter_push_device_id");
+    const savedDeviceId = localStorage.getItem("medlens_push_device_id");
     if (savedDeviceId) {
       setPushDeviceId(savedDeviceId);
       setPushSubscribed(true);
@@ -157,7 +157,7 @@ export function useNotifications() {
         if (result) {
           setPushDeviceId(result.deviceId);
           setPushSubscribed(true);
-          localStorage.setItem("careafter_push_device_id", result.deviceId);
+          localStorage.setItem("medlens_push_device_id", result.deviceId);
           console.log("✅ Push reminders registered with server");
         }
       } catch (err) {
@@ -180,7 +180,7 @@ export function useNotifications() {
         await unsubscribeFromPushReminders(pushDeviceId);
         setPushDeviceId(null);
         setPushSubscribed(false);
-        localStorage.removeItem("careafter_push_device_id");
+        localStorage.removeItem("medlens_push_device_id");
       } catch (err) {
         console.warn("Failed to unsubscribe from push:", err);
       }
@@ -218,8 +218,8 @@ export function useInstallPrompt() {
     if (!isStandalone) {
       setupInstallPrompt();
       const handleInstallable = () => setCanInstall(true);
-      window.addEventListener("careafter:installable", handleInstallable);
-      return () => window.removeEventListener("careafter:installable", handleInstallable);
+      window.addEventListener("medlens:installable", handleInstallable);
+      return () => window.removeEventListener("medlens:installable", handleInstallable);
     }
   }, []);
 

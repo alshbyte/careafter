@@ -1,6 +1,6 @@
 {
-  "name": "CareAfter — Your Recovery Assistant",
-  "short_name": "CareAfter",
+  "name": "MedLens — Your Recovery Assistant",
+  "short_name": "MedLens",
   "description": "Turn your discharge papers into a personal recovery assistant — free, private, and always available.",
   "start_url": "/",
   "display": "standalone",

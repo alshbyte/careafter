@@ -69,7 +69,7 @@ function formatICSDate(date: Date): string {
 function generateUID(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 8);
-  return `${timestamp}-${random}@careafter.app`;
+  return `${timestamp}-${random}@medlens.app`;
 }
 
 /**
@@ -166,7 +166,7 @@ function generateMedicationEvent(
     `DTEND:${formatICSDate(eventEnd)}`,
     `RRULE:FREQ=DAILY;COUNT=${durationDays}`,
     `SUMMARY:💊 Take ${escapeICS(med.name)} ${escapeICS(med.dosage)}`,
-    `DESCRIPTION:Medication: ${escapeICS(med.name)}\\nDosage: ${escapeICS(med.dosage)}\\nFrequency: ${escapeICS(med.frequency ?? "As prescribed")}${specialNote}\\n\\nFrom your CareAfter discharge plan.`,
+    `DESCRIPTION:Medication: ${escapeICS(med.name)}\\nDosage: ${escapeICS(med.dosage)}\\nFrequency: ${escapeICS(med.frequency ?? "As prescribed")}${specialNote}\\n\\nFrom your MedLens discharge plan.`,
     "STATUS:CONFIRMED",
     "BEGIN:VALARM",
     "TRIGGER:PT0M",
@@ -212,7 +212,7 @@ function generateFollowUpEvent(followUp: FollowUp, referenceDate: Date): string 
     `DTSTART:${formatICSDate(targetDate)}`,
     `DTEND:${formatICSDate(endDate)}`,
     `SUMMARY:📅 Schedule: ${escapeICS(followUp.provider)}${followUp.specialty ? ` (${escapeICS(followUp.specialty)})` : ""}`,
-    `DESCRIPTION:Follow-up with ${escapeICS(followUp.provider)}\\nSchedule within: ${escapeICS(followUp.timeframe ?? "1 week")}${phone}${reason}\\n\\n⚠️ Call to schedule this appointment!\\n\\nFrom your CareAfter discharge plan.`,
+    `DESCRIPTION:Follow-up with ${escapeICS(followUp.provider)}\\nSchedule within: ${escapeICS(followUp.timeframe ?? "1 week")}${phone}${reason}\\n\\n⚠️ Call to schedule this appointment!\\n\\nFrom your MedLens discharge plan.`,
     "STATUS:TENTATIVE",
     "BEGIN:VALARM",
     "TRIGGER:-P1D",
@@ -265,12 +265,12 @@ export function generateCalendarFile(options: CalendarExportOptions): string {
     events.push(generateFollowUpEvent(fu, startDate));
   }
 
-  const calName = patientName ? `${patientName}'s Recovery Plan` : "CareAfter Recovery Plan";
+  const calName = patientName ? `${patientName}'s Recovery Plan` : "MedLens Recovery Plan";
 
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//CareAfter//Recovery Plan//EN",
+    "PRODID:-//MedLens//Recovery Plan//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${escapeICS(calName)}`,
@@ -289,7 +289,7 @@ export function generateCalendarFile(options: CalendarExportOptions): string {
  */
 export function downloadCalendarFile(
   options: CalendarExportOptions,
-  filename: string = "careafter-reminders.ics"
+  filename: string = "medlens-reminders.ics"
 ): void {
   const icsContent = generateCalendarFile(options);
   const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });

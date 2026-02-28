@@ -154,7 +154,7 @@ export function createShareLink(
   const encoded = toBase64Url(JSON.stringify(payload));
 
   // Build the full URL — works for any deployment domain
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://careafter.app";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://medlens.app";
   const url = `${origin}/share/${token}#${encoded}`;
 
   const shareLink: ShareLink = {

@@ -17,7 +17,7 @@
  * 3. This subscription is unique to THIS browser + THIS website + THIS device
  * 
  * The VAPID public key tells the push service "this subscription belongs
- * to the CareAfter application server." When our server sends a push,
+ * to the MedLens application server." When our server sends a push,
  * it signs the request with the VAPID private key to prove its identity.
  */
 

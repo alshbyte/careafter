@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CareAfter — Error Boundary
+ * MedLens — Error Boundary
  * ============================
  *
  * LEARN-ALONG: React Error Boundaries
@@ -99,7 +99,7 @@ export class ErrorBoundary extends React.Component<
     });
 
     // Also log to console for development debugging
-    console.error("[CareAfter ErrorBoundary]", error, errorInfo);
+    console.error("[MedLens ErrorBoundary]", error, errorInfo);
   }
 
   private handleReload = (): void => {
@@ -132,7 +132,7 @@ export class ErrorBoundary extends React.Component<
             className="mb-8 max-w-md text-base leading-relaxed"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            We&apos;re sorry — CareAfter ran into an unexpected problem. Your
+            We&apos;re sorry — MedLens ran into an unexpected problem. Your
             data is safe. Please try reloading the page.
           </p>
 
@@ -171,7 +171,7 @@ export class ErrorBoundary extends React.Component<
             className="mt-8 max-w-sm text-xs"
             style={{ color: "var(--color-text-muted)" }}
           >
-            This error has been logged anonymously to help us improve CareAfter.
+            This error has been logged anonymously to help us improve MedLens.
             No personal or health information was shared.
           </p>
         </div>

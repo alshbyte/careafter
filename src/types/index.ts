@@ -1,4 +1,4 @@
-// CareAfter — Type Definitions
+// MedLens — Type Definitions
 
 /** Extracted medication from discharge summary */
 export interface Medication {

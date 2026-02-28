@@ -1,5 +1,5 @@
 {
-  "name": "careafter",
+  "name": "medlens",
   "version": "1.0.0",
   "description": "Turn your discharge papers into a personal recovery assistant",
   "private": true,
@@ -15,7 +15,7 @@
     "discharge",
     "recovery"
   ],
-  "author": "CareAfter",
+  "author": "MedLens",
   "license": "UNLICENSED",
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
