@@ -52,6 +52,8 @@ export interface DischargeData {
   patientFirstName?: string;
   dischargeDate?: string;
   diagnosis?: string;
+  /** Plain-language summary of the entire discharge */
+  summary?: string;
   overallConfidence?: number;
   medications: Medication[];
   followUps: FollowUp[];

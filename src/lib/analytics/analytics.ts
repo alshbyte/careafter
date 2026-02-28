@@ -34,6 +34,7 @@ export type AnalyticsEventName =
   | "plan_confirmed"
   | "calendar_added"
   | "medication_explained"
+  | "question_asked"
   | "share_link_created"
   | "push_subscribed"
   | "pwa_installed"

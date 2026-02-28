@@ -38,6 +38,7 @@ function buildExtractionPrompt(languageCode?: string): string {
 - patientFirstName (first name only, for personalization)
 - dischargeDate
 - diagnosis (in plain language)
+- summary (a 3-5 sentence plain-language summary of the entire discharge — what happened, what was done, and what the patient needs to do now. Write as if explaining to the patient directly, at a 6th-grade reading level.)
 - medications: array of {name, genericName, dosage, frequency, timing, duration, specialInstructions, purpose, confidence}
 - followUps: array of {provider, specialty, timeframe, suggestedDate, phoneNumber, reason, confidence}
 - warningsSigns: array of {description, severity (urgent/important/informational), action, confidence}
@@ -197,6 +198,61 @@ ${askDoctor}`,
   return (
     result.candidates?.[0]?.content?.parts?.[0]?.text ??
     "Unable to explain this term."
+  );
+}
+
+/** Answer a follow-up question about the patient's discharge */
+export async function askQuestion(
+  question: string,
+  dischargeContext: string,
+  apiKey: string,
+  language?: string
+): Promise<string> {
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+  const cleanKey = apiKey.trim();
+  const langName = language && language !== "en" ? getLanguageNameForAI(language) : null;
+  const langInstruction = langName ? `Respond ENTIRELY in ${langName}. ` : "";
+
+  const response = await fetch(
+    `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${cleanKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: `${langInstruction}You are a helpful assistant for a patient who was recently discharged from the hospital. 
+Answer questions ONLY based on the patient's discharge information provided below. 
+Use simple, plain language at a 6th-grade reading level. Keep answers under 3 sentences.
+If the question cannot be answered from the discharge information, say so and recommend they ask their doctor.
+NEVER provide medical advice beyond what's in the discharge document.
+Always end with: "Talk to your doctor if you have more questions."
+
+PATIENT'S DISCHARGE INFORMATION:
+${dischargeContext}`,
+            },
+          ],
+        },
+        contents: [
+          {
+            parts: [{ text: question }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 300,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) throw new Error("Failed to get answer");
+
+  const result = await response.json();
+  return (
+    result.candidates?.[0]?.content?.parts?.[0]?.text ??
+    "I couldn't answer that. Please ask your doctor or pharmacist."
   );
 }
 

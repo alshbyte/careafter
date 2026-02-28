@@ -34,7 +34,7 @@ import { LanguageBadge } from "@/components/language-selector";
 export default function CarePlanPage() {
   const router = useRouter();
   const [data, setData] = useState<DischargeData | null>(null);
-  const [activeTab, setActiveTab] = useState<"meds" | "followups" | "warnings">("meds");
+  const [activeTab, setActiveTab] = useState<"summary" | "meds" | "followups" | "warnings">("summary");
   const [explaining, setExplaining] = useState<string | null>(null);
   const [explanation, setExplanation] = useState<string>("");
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
@@ -43,6 +43,10 @@ export default function CarePlanPage() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  // Q&A state
+  const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "ai"; text: string }>>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
   const { plan, savePlan } = useCarePlan();
   const { permission, requestPermission, startReminders, pushSubscribed } = useNotifications();
   const { canInstall, isInstalled, install, isIOS } = useInstallPrompt();
@@ -94,6 +98,61 @@ export default function CarePlanPage() {
     }
   };
 
+  /** Build a text summary of discharge data to use as Q&A context */
+  const buildContextString = useCallback((d: DischargeData): string => {
+    const parts: string[] = [];
+    if (d.diagnosis) parts.push(`Diagnosis: ${d.diagnosis}`);
+    if (d.dischargeDate) parts.push(`Discharged: ${d.dischargeDate}`);
+    if (d.summary) parts.push(`Summary: ${d.summary}`);
+    if (d.medications?.length) {
+      parts.push("Medications: " + d.medications.map(m =>
+        `${m.name} ${m.dosage} ${m.frequency}${m.specialInstructions ? ` (${m.specialInstructions})` : ""}`
+      ).join("; "));
+    }
+    if (d.followUps?.length) {
+      parts.push("Follow-ups: " + d.followUps.map(f =>
+        `${f.provider} within ${f.timeframe}${f.reason ? ` for ${f.reason}` : ""}`
+      ).join("; "));
+    }
+    if (d.warningsSigns?.length) {
+      parts.push("Warning signs: " + d.warningsSigns.map(w =>
+        `${w.description} → ${w.action}`
+      ).join("; "));
+    }
+    if (d.restrictions?.length) {
+      parts.push("Restrictions: " + d.restrictions.map(r => r.description).join("; "));
+    }
+    if (d.additionalNotes) parts.push(`Notes: ${d.additionalNotes}`);
+    return parts.join("\n");
+  }, []);
+
+  const handleAskQuestion = useCallback(async () => {
+    if (!chatInput.trim() || !data || chatLoading) return;
+    const question = chatInput.trim();
+    setChatInput("");
+    setChatMessages(prev => [...prev, { role: "user", text: question }]);
+    setChatLoading(true);
+    trackEvent("question_asked");
+
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question,
+          context: buildContextString(data),
+          language: data.language,
+        }),
+      });
+      const result = await res.json();
+      setChatMessages(prev => [...prev, { role: "ai", text: result.answer ?? result.error ?? "Sorry, I couldn't answer that." }]);
+    } catch {
+      setChatMessages(prev => [...prev, { role: "ai", text: "Something went wrong. Please try again." }]);
+    } finally {
+      setChatLoading(false);
+    }
+  }, [chatInput, data, chatLoading, trackEvent, buildContextString]);
+
   if (!data) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -103,7 +162,8 @@ export default function CarePlanPage() {
   }
 
   const tabs = [
-    { id: "meds" as const, label: "💊 Medications", count: data.medications?.length ?? 0 },
+    { id: "summary" as const, label: "📋 Summary", count: 0 },
+    { id: "meds" as const, label: "💊 Meds", count: data.medications?.length ?? 0 },
     { id: "followups" as const, label: "📅 Follow-Ups", count: data.followUps?.length ?? 0 },
     { id: "warnings" as const, label: "⚠️ Warnings", count: data.warningsSigns?.length ?? 0 },
   ];
@@ -342,6 +402,102 @@ export default function CarePlanPage() {
           </div>
         )}
 
+        {/* Summary Tab */}
+        {activeTab === "summary" && (
+          <div className="space-y-5">
+            <h2 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
+              Your Discharge Summary
+            </h2>
+
+            {/* Plain-language summary */}
+            {data.summary ? (
+              <div
+                className="rounded-2xl p-5"
+                style={{ backgroundColor: "var(--color-surface)" }}
+              >
+                <p className="text-base leading-relaxed" style={{ color: "var(--color-text)" }}>
+                  {data.summary}
+                </p>
+              </div>
+            ) : (
+              <div
+                className="rounded-2xl p-5"
+                style={{ backgroundColor: "var(--color-surface)" }}
+              >
+                <p className="text-base" style={{ color: "var(--color-text)" }}>
+                  {data.diagnosis
+                    ? `You were discharged on ${data.dischargeDate ?? "a recent date"} with a diagnosis of ${data.diagnosis}. Review the tabs above for your medications, follow-up appointments, and warning signs to watch for.`
+                    : "Your discharge information is shown in the tabs above. Review each tab for your medications, follow-ups, and warning signs."}
+                </p>
+              </div>
+            )}
+
+            {/* Quick stats */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Medications", count: data.medications?.length ?? 0, emoji: "💊", tab: "meds" as const },
+                { label: "Follow-Ups", count: data.followUps?.length ?? 0, emoji: "📅", tab: "followups" as const },
+                { label: "Warnings", count: data.warningsSigns?.length ?? 0, emoji: "⚠️", tab: "warnings" as const },
+              ].map((stat) => (
+                <button
+                  key={stat.tab}
+                  onClick={() => setActiveTab(stat.tab)}
+                  className="rounded-xl p-4 text-center transition-all active:scale-95"
+                  style={{ backgroundColor: "var(--color-surface)" }}
+                >
+                  <div className="text-2xl">{stat.emoji}</div>
+                  <div className="mt-1 text-2xl font-bold" style={{ color: "var(--color-primary)" }}>
+                    {stat.count}
+                  </div>
+                  <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    {stat.label}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Additional notes */}
+            {data.additionalNotes && (
+              <div
+                className="rounded-2xl p-5"
+                style={{ backgroundColor: "var(--color-surface)" }}
+              >
+                <h3 className="mb-2 text-lg font-bold" style={{ color: "var(--color-text)" }}>
+                  📝 Additional Notes
+                </h3>
+                <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
+                  {data.additionalNotes}
+                </p>
+              </div>
+            )}
+
+            {/* Restrictions */}
+            {(data.restrictions?.length ?? 0) > 0 && (
+              <div
+                className="rounded-2xl p-5"
+                style={{ backgroundColor: "var(--color-surface)" }}
+              >
+                <h3 className="mb-3 text-lg font-bold" style={{ color: "var(--color-text)" }}>
+                  🚫 Restrictions
+                </h3>
+                {data.restrictions?.map((r, i) => (
+                  <div key={r.id ?? i} className="mb-2 flex items-start gap-2">
+                    <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>•</span>
+                    <div>
+                      <p className="text-base" style={{ color: "var(--color-text)" }}>{r.description}</p>
+                      {r.duration && (
+                        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+                          Duration: {r.duration}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Medications Tab */}
         {activeTab === "meds" && (
           <div className="space-y-4">
@@ -524,6 +680,82 @@ export default function CarePlanPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* ── Ask About Your Discharge (Q&A Chat) ── */}
+      <div className="mx-auto max-w-2xl px-6 pb-6">
+        <div
+          className="rounded-2xl p-5"
+          style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
+        >
+          <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
+            💬 Ask About Your Discharge
+          </h3>
+          <p className="mt-1 text-sm" style={{ color: "var(--color-text-muted)" }}>
+            Ask any question about your discharge in plain language.
+          </p>
+
+          {/* Chat messages */}
+          {chatMessages.length > 0 && (
+            <div className="mt-4 max-h-64 space-y-3 overflow-y-auto rounded-xl p-3"
+              style={{ backgroundColor: "var(--color-bg)" }}
+            >
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm"
+                    style={{
+                      backgroundColor: msg.role === "user" ? "var(--color-primary)" : "var(--color-surface)",
+                      color: msg.role === "user" ? "white" : "var(--color-text)",
+                    }}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="rounded-2xl px-4 py-2.5 text-sm"
+                    style={{ backgroundColor: "var(--color-surface)", color: "var(--color-text-muted)" }}
+                  >
+                    Thinking...
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="mt-3 flex gap-2">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAskQuestion()}
+              placeholder="e.g., Can I take ibuprofen with my meds?"
+              className="flex-1 rounded-xl border px-4 py-3 text-base"
+              style={{
+                backgroundColor: "var(--color-bg)",
+                borderColor: "var(--color-border)",
+                color: "var(--color-text)",
+              }}
+              disabled={chatLoading}
+              maxLength={500}
+            />
+            <button
+              onClick={handleAskQuestion}
+              disabled={chatLoading || !chatInput.trim()}
+              className="rounded-xl px-4 py-3 font-bold text-white transition-all active:scale-95 disabled:opacity-50"
+              style={{ backgroundColor: "var(--color-primary)", minWidth: 48 }}
+            >
+              {chatLoading ? "..." : "Ask"}
+            </button>
+          </div>
+
+          <p className="mt-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+            ⚕️ Based on your discharge papers only. Always consult your healthcare provider.
+          </p>
+        </div>
       </div>
 
       {/* ── Share with Caregiver Section ──
