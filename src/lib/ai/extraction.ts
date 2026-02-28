@@ -73,7 +73,7 @@ export async function extractDischargeData(
   language?: string
 ): Promise<ExtractionResult> {
   const startTime = Date.now();
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
   // Trim the key to remove any accidental whitespace/newlines
   const cleanKey = apiKey.trim();
 
@@ -149,7 +149,7 @@ export async function explainTerm(
   apiKey: string,
   language?: string
 ): Promise<string> {
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
   const cleanKey = apiKey.trim();
   const langName = language && language !== "en" ? getLanguageNameForAI(language) : null;
   const langInstruction = langName
