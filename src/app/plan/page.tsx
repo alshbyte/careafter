@@ -171,82 +171,74 @@ export default function CarePlanPage() {
   }
 
   const tabs = [
-    { id: "summary" as const, label: "📋 Summary", count: 0 },
-    { id: "meds" as const, label: "💊 Meds", count: data.medications?.length ?? 0 },
-    { id: "followups" as const, label: "📅 Follow-Ups", count: data.followUps?.length ?? 0 },
-    { id: "warnings" as const, label: "⚠️ Warnings", count: data.warningsSigns?.length ?? 0 },
+    { id: "summary" as const, label: "Summary", icon: "📋", count: 0 },
+    { id: "meds" as const, label: "Meds", icon: "💊", count: data.medications?.length ?? 0 },
+    { id: "followups" as const, label: "Follow-Ups", icon: "📅", count: data.followUps?.length ?? 0 },
+    { id: "warnings" as const, label: "Warnings", icon: "⚠️", count: data.warningsSigns?.length ?? 0 },
   ];
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg)" }}>
-      {/* Header */}
+      {/* Compact Header */}
       <header
-        className="px-6 py-4 shadow-sm"
+        className="px-4 pb-3 pt-4"
         style={{ backgroundColor: "var(--color-primary)" }}
       >
         <div className="mx-auto max-w-2xl">
-          <p className="text-sm text-white/80">Your Recovery Plan</p>
-          <h1 className="text-2xl font-bold text-white">
-            {data.patientFirstName ? `${data.patientFirstName}'s Care Plan` : "Your Care Plan"}
-            {" "}
-            <LanguageBadge languageCode={data.language} />
-          </h1>
-          {data.diagnosis && (
-            <p className="mt-1 text-sm text-white/70">
-              Discharged: {data.dischargeDate ?? "Recently"} · {data.diagnosis}
-            </p>
-          )}
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-lg font-bold text-white">
+                {data.patientFirstName ? `${data.patientFirstName}'s Care Plan` : "Your Care Plan"}
+                {" "}
+                <LanguageBadge languageCode={data.language} />
+              </h1>
+              {data.diagnosis && (
+                <p className="truncate text-xs text-white/60">
+                  {data.dischargeDate ?? "Recently"} · {data.diagnosis}
+                </p>
+              )}
+            </div>
+            <a
+              href="tel:911"
+              className="ml-3 flex-shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-bold text-white"
+              style={{ backgroundColor: "var(--color-danger)", minHeight: "auto", minWidth: "auto" }}
+            >
+              🚨 911
+            </a>
+          </div>
         </div>
       </header>
 
-      {/* Emergency Banner */}
-      <div
-        className="px-6 py-3 text-center text-sm font-medium text-white"
-        style={{ backgroundColor: "var(--color-danger)" }}
-      >
-        ⚠️ Medical emergency?{" "}
-        <a href="tel:911" className="font-bold underline">
-          Call 911
-        </a>
-      </div>
-
-      {/* Tab Navigation — pill style with horizontal scroll */}
+      {/* Tab Navigation — icon + short label, equal width */}
       <nav
-        className="sticky top-0 z-10 overflow-x-auto px-4 py-3 shadow-sm"
-        style={{ backgroundColor: "var(--color-surface)", WebkitOverflowScrolling: "touch" }}
+        className="sticky top-0 z-10 border-b px-2 py-1.5"
+        style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
       >
-        <div className="mx-auto flex max-w-2xl gap-2">
+        <div className="mx-auto flex max-w-2xl">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-semibold transition-all"
+              className="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-center transition-all"
               style={{
-                backgroundColor: activeTab === tab.id ? "var(--color-primary)" : "var(--color-surface-alt)",
-                color: activeTab === tab.id ? "white" : "var(--color-text-secondary)",
-                minHeight: "var(--touch-target)",
-                boxShadow: activeTab === tab.id ? "0 2px 8px rgba(15, 118, 110, 0.3)" : "none",
+                backgroundColor: activeTab === tab.id ? "var(--color-primary)" : "transparent",
+                color: activeTab === tab.id ? "white" : "var(--color-text-muted)",
+                minHeight: 44,
+                minWidth: "auto",
               }}
             >
-              {tab.label}
-              {tab.count > 0 && (
-                <span
-                  className="inline-flex h-5 min-w-5 items-center justify-center rounded-full text-xs font-bold"
-                  style={{
-                    backgroundColor: activeTab === tab.id ? "rgba(255,255,255,0.25)" : "var(--color-border)",
-                    color: activeTab === tab.id ? "white" : "var(--color-text-muted)",
-                  }}
-                >
-                  {tab.count}
-                </span>
-              )}
+              <span className="text-base leading-none">{tab.icon}</span>
+              <span className="text-[11px] font-semibold leading-tight">
+                {tab.label}
+                {tab.count > 0 && ` (${tab.count})`}
+              </span>
             </button>
           ))}
         </div>
       </nav>
 
       {/* Content */}
-      <div className="mx-auto max-w-2xl px-6 py-6">
+      <div className="mx-auto max-w-2xl px-4 py-4">
 
         {/* ── Setup Actions (collapsible) ── */}
         {(() => {
@@ -264,21 +256,16 @@ export default function CarePlanPage() {
               {!showSetup && hasSetupItems && (
                 <button
                   onClick={() => setShowSetup(true)}
-                  className="flex w-full items-center justify-between rounded-2xl px-5 py-4 text-left"
+                  className="flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-left"
                   style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">⚙️</span>
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                        Set up reminders & more
-                      </p>
-                      <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                        Calendar, notifications, install app
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">⚙️</span>
+                    <span className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                      Set up reminders & install app
+                    </span>
                   </div>
-                  <span style={{ color: "var(--color-primary)" }}>▾</span>
+                  <span className="text-xs" style={{ color: "var(--color-primary)" }}>Setup ▾</span>
                 </button>
               )}
 
@@ -500,90 +487,41 @@ export default function CarePlanPage() {
 
         {/* Summary Tab */}
         {activeTab === "summary" && (
-          <div className="space-y-5">
-            <h2 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
-              Your Discharge Summary
-            </h2>
-
+          <div className="space-y-4">
             {/* Plain-language summary */}
-            {data.summary ? (
-              <div
-                className="rounded-2xl p-5"
-                style={{ backgroundColor: "var(--color-surface)" }}
-              >
-                <p className="text-base leading-relaxed" style={{ color: "var(--color-text)" }}>
-                  {data.summary}
-                </p>
-              </div>
-            ) : (
-              <div
-                className="rounded-2xl p-5"
-                style={{ backgroundColor: "var(--color-surface)" }}
-              >
-                <p className="text-base" style={{ color: "var(--color-text)" }}>
-                  {data.diagnosis
-                    ? `You were discharged on ${data.dischargeDate ?? "a recent date"} with a diagnosis of ${data.diagnosis}. Review the tabs above for your medications, follow-up appointments, and warning signs to watch for.`
+            <div
+              className="rounded-xl p-4"
+              style={{ backgroundColor: "var(--color-surface)" }}
+            >
+              <h2 className="mb-2 text-base font-bold" style={{ color: "var(--color-text)" }}>
+                Your Discharge Summary
+              </h2>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+                {data.summary
+                  ? data.summary
+                  : data.diagnosis
+                    ? `You were discharged on ${data.dischargeDate ?? "a recent date"} with a diagnosis of ${data.diagnosis}. Review the tabs above for your medications, follow-up appointments, and warning signs.`
                     : "Your discharge information is shown in the tabs above. Review each tab for your medications, follow-ups, and warning signs."}
-                </p>
-              </div>
-            )}
-
-            {/* Quick stats */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "Medications", count: data.medications?.length ?? 0, emoji: "💊", tab: "meds" as const },
-                { label: "Follow-Ups", count: data.followUps?.length ?? 0, emoji: "📅", tab: "followups" as const },
-                { label: "Warnings", count: data.warningsSigns?.length ?? 0, emoji: "⚠️", tab: "warnings" as const },
-              ].map((stat) => (
-                <button
-                  key={stat.tab}
-                  onClick={() => setActiveTab(stat.tab)}
-                  className="rounded-xl p-4 text-center transition-all active:scale-95"
-                  style={{ backgroundColor: "var(--color-surface)" }}
-                >
-                  <div className="text-2xl">{stat.emoji}</div>
-                  <div className="mt-1 text-2xl font-bold" style={{ color: "var(--color-primary)" }}>
-                    {stat.count}
-                  </div>
-                  <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                    {stat.label}
-                  </div>
-                </button>
-              ))}
+              </p>
             </div>
-
-            {/* Additional notes */}
-            {data.additionalNotes && (
-              <div
-                className="rounded-2xl p-5"
-                style={{ backgroundColor: "var(--color-surface)" }}
-              >
-                <h3 className="mb-2 text-lg font-bold" style={{ color: "var(--color-text)" }}>
-                  📝 Additional Notes
-                </h3>
-                <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
-                  {data.additionalNotes}
-                </p>
-              </div>
-            )}
 
             {/* Restrictions */}
             {(data.restrictions?.length ?? 0) > 0 && (
               <div
-                className="rounded-2xl p-5"
+                className="rounded-xl p-4"
                 style={{ backgroundColor: "var(--color-surface)" }}
               >
-                <h3 className="mb-3 text-lg font-bold" style={{ color: "var(--color-text)" }}>
+                <h3 className="mb-2 text-base font-bold" style={{ color: "var(--color-text)" }}>
                   🚫 Restrictions
                 </h3>
                 {data.restrictions?.map((r, i) => (
-                  <div key={r.id ?? i} className="mb-2 flex items-start gap-2">
-                    <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>•</span>
+                  <div key={r.id ?? i} className="mb-1.5 flex items-start gap-2">
+                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>•</span>
                     <div>
-                      <p className="text-base" style={{ color: "var(--color-text)" }}>{r.description}</p>
+                      <p className="text-sm" style={{ color: "var(--color-text)" }}>{r.description}</p>
                       {r.duration && (
-                        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                          Duration: {r.duration}
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                          {r.duration}
                         </p>
                       )}
                     </div>
@@ -591,19 +529,168 @@ export default function CarePlanPage() {
                 ))}
               </div>
             )}
+
+            {/* Additional notes */}
+            {data.additionalNotes && (
+              <div
+                className="rounded-xl p-4"
+                style={{ backgroundColor: "var(--color-surface)" }}
+              >
+                <h3 className="mb-1 text-base font-bold" style={{ color: "var(--color-text)" }}>
+                  📝 Additional Notes
+                </h3>
+                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                  {data.additionalNotes}
+                </p>
+              </div>
+            )}
+
+            {/* Q&A Chat — embedded in Summary tab */}
+            <div
+              className="rounded-xl p-4"
+              style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
+            >
+              <h3 className="text-base font-bold" style={{ color: "var(--color-text)" }}>
+                💬 Ask a Question
+              </h3>
+              <p className="mt-0.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
+                Ask anything about your discharge in plain language.
+              </p>
+
+              {/* Suggested questions */}
+              {chatMessages.length === 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {[
+                    "What should I eat?",
+                    "Can I drive?",
+                    "When do I take my meds?",
+                    "What if I miss a dose?",
+                  ].map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => { setChatInput(q); }}
+                      className="suggestion-chip rounded-full border px-2.5 py-1 text-xs"
+                      style={{
+                        borderColor: "var(--color-border)",
+                        color: "var(--color-primary)",
+                        backgroundColor: "var(--color-bg)",
+                        minHeight: "auto",
+                        minWidth: "auto",
+                      }}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Chat messages */}
+              {chatMessages.length > 0 && (
+                <div className="mt-3 max-h-60 space-y-2 overflow-y-auto rounded-lg p-2"
+                  style={{ backgroundColor: "var(--color-bg)" }}
+                >
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div
+                        className="max-w-[85%] rounded-2xl px-3 py-2 text-sm"
+                        style={{
+                          backgroundColor: msg.role === "user" ? "var(--color-primary)" : "var(--color-surface)",
+                          color: msg.role === "user" ? "white" : "var(--color-text)",
+                        }}
+                      >
+                        {msg.text}
+                      </div>
+                    </div>
+                  ))}
+                  {chatLoading && (
+                    <div className="flex justify-start">
+                      <div className="rounded-2xl px-3 py-2 text-sm animate-pulse-gentle"
+                        style={{ backgroundColor: "var(--color-surface)", color: "var(--color-text-muted)" }}
+                      >
+                        Thinking...
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Input */}
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAskQuestion()}
+                  placeholder="Ask about your discharge..."
+                  className="min-w-0 flex-1 rounded-lg border px-3 py-2.5 text-sm"
+                  style={{
+                    backgroundColor: "var(--color-bg)",
+                    borderColor: "var(--color-border)",
+                    color: "var(--color-text)",
+                  }}
+                  disabled={chatLoading}
+                  maxLength={500}
+                />
+                <button
+                  onClick={handleAskQuestion}
+                  disabled={chatLoading || !chatInput.trim()}
+                  className="flex-shrink-0 rounded-lg px-4 py-2.5 text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-50"
+                  style={{ backgroundColor: "var(--color-primary)", minWidth: "auto" }}
+                >
+                  {chatLoading ? "..." : "Ask"}
+                </button>
+              </div>
+
+              <p className="mt-1.5 text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                ⚕️ Based on your discharge papers only. Always consult your doctor.
+              </p>
+            </div>
+
+            {/* Share with Caregiver — compact in summary */}
+            <button
+              onClick={() => {
+                if (!data) return;
+                const { url, shareLink } = createShareLink(
+                  data,
+                  data.patientFirstName
+                    ? `${data.patientFirstName}'s care plan`
+                    : "Shared care plan"
+                );
+                if (plan?.id) {
+                  saveShareLink({ ...shareLink, carePlanId: plan.id }).catch(() => {});
+                }
+                setShareUrl(url);
+                setShareCopied(false);
+                setShowShareDialog(true);
+                trackEvent("share_link_created");
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all active:scale-[0.98]"
+              style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
+            >
+              <span className="text-xl">👥</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                  Share with a Caregiver
+                </p>
+                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  Send a read-only view to a family member
+                </p>
+              </div>
+              <span style={{ color: "var(--color-primary)" }}>→</span>
+            </button>
           </div>
         )}
 
         {/* Medications Tab */}
         {activeTab === "meds" && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
+          <div className="space-y-3">
+            <h2 className="text-base font-bold" style={{ color: "var(--color-text)" }}>
               Your Medications
             </h2>
             {data.medications?.map((med) => (
               <div
                 key={med.id}
-                className="rounded-2xl p-5 shadow-sm"
+                className="rounded-xl p-4"
                 style={{ backgroundColor: "var(--color-surface)" }}
               >
                 <div className="flex items-start justify-between">
@@ -680,14 +767,14 @@ export default function CarePlanPage() {
 
         {/* Follow-ups Tab */}
         {activeTab === "followups" && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
+          <div className="space-y-3">
+            <h2 className="text-base font-bold" style={{ color: "var(--color-text)" }}>
               Follow-Up Appointments
             </h2>
             {data.followUps?.map((fu) => (
               <div
                 key={fu.id}
-                className="rounded-2xl p-5 shadow-sm"
+                className="rounded-xl p-4"
                 style={{ backgroundColor: "var(--color-surface)" }}
               >
                 <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
@@ -722,18 +809,18 @@ export default function CarePlanPage() {
 
         {/* Warning Signs Tab */}
         {activeTab === "warnings" && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
+          <div className="space-y-3">
+            <h2 className="text-base font-bold" style={{ color: "var(--color-text)" }}>
               Warning Signs to Watch For
             </h2>
-            <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
-              If you notice any of these, take the recommended action. Trust your instincts — if something
+            <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              If you notice any of these, take the recommended action. If something
               feels wrong, it&apos;s always OK to call your doctor.
             </p>
             {data.warningsSigns?.map((ws) => (
               <div
                 key={ws.id}
-                className="rounded-2xl border-l-4 p-5 shadow-sm"
+                className="rounded-xl border-l-4 p-4"
                 style={{
                   backgroundColor: "var(--color-surface)",
                   borderColor:
@@ -777,150 +864,6 @@ export default function CarePlanPage() {
           </div>
         )}
         </div>{/* end tab-content */}
-      </div>
-
-      {/* ── Ask About Your Discharge (Q&A Chat) ── */}
-      <div className="mx-auto max-w-2xl px-6 pb-6">
-        <div
-          className="rounded-2xl p-5"
-          style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
-        >
-          <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
-            💬 Ask About Your Discharge
-          </h3>
-          <p className="mt-1 text-sm" style={{ color: "var(--color-text-muted)" }}>
-            Ask any question about your discharge in plain language.
-          </p>
-
-          {/* Suggested questions — shown only when no messages yet */}
-          {chatMessages.length === 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {[
-                "What should I eat?",
-                "Can I drive?",
-                "When do I take my meds?",
-                "What if I miss a dose?",
-              ].map((q) => (
-                <button
-                  key={q}
-                  onClick={() => { setChatInput(q); }}
-                  className="suggestion-chip rounded-full border px-3 py-1.5 text-sm"
-                  style={{
-                    borderColor: "var(--color-border)",
-                    color: "var(--color-primary)",
-                    backgroundColor: "var(--color-surface-alt)",
-                  }}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Chat messages */}
-          {chatMessages.length > 0 && (
-            <div className="mt-4 max-h-64 space-y-3 overflow-y-auto rounded-xl p-3"
-              style={{ backgroundColor: "var(--color-bg)" }}
-            >
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm"
-                    style={{
-                      backgroundColor: msg.role === "user" ? "var(--color-primary)" : "var(--color-surface)",
-                      color: msg.role === "user" ? "white" : "var(--color-text)",
-                    }}
-                  >
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
-              {chatLoading && (
-                <div className="flex justify-start">
-                  <div className="rounded-2xl px-4 py-2.5 text-sm"
-                    style={{ backgroundColor: "var(--color-surface)", color: "var(--color-text-muted)" }}
-                  >
-                    Thinking...
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Input */}
-          <div className="mt-3 flex gap-2">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAskQuestion()}
-              placeholder="e.g., Can I take ibuprofen with my meds?"
-              className="flex-1 rounded-xl border px-4 py-3 text-base"
-              style={{
-                backgroundColor: "var(--color-bg)",
-                borderColor: "var(--color-border)",
-                color: "var(--color-text)",
-              }}
-              disabled={chatLoading}
-              maxLength={500}
-            />
-            <button
-              onClick={handleAskQuestion}
-              disabled={chatLoading || !chatInput.trim()}
-              className="rounded-xl px-4 py-3 font-bold text-white transition-all active:scale-95 disabled:opacity-50"
-              style={{ backgroundColor: "var(--color-primary)", minWidth: 48 }}
-            >
-              {chatLoading ? "..." : "Ask"}
-            </button>
-          </div>
-
-          <p className="mt-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
-            ⚕️ Based on your discharge papers only. Always consult your healthcare provider.
-          </p>
-        </div>
-      </div>
-
-      {/* ── Share with Caregiver Section ──
-          LEARN: This section sits above the footer, always visible after scrolling.
-          We generate the share link on-demand (not on page load) to avoid
-          creating links the user never intended to share. */}
-      <div className="mx-auto max-w-2xl px-6 pb-6">
-        <div
-          className="rounded-2xl p-5"
-          style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
-        >
-          <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
-            👥 Share with a Caregiver
-          </h3>
-          <p className="mt-2 text-base" style={{ color: "var(--color-text-secondary)" }}>
-            Send a read-only view of your care plan to a family member or caregiver so they can help with your recovery.
-          </p>
-          <button
-            onClick={() => {
-              if (!data) return;
-              const { url, shareLink } = createShareLink(
-                data,
-                data.patientFirstName
-                  ? `${data.patientFirstName}'s care plan`
-                  : "Shared care plan"
-              );
-              // Persist share link metadata (token, expiry) to IndexedDB
-              if (plan?.id) {
-                saveShareLink({ ...shareLink, carePlanId: plan.id }).catch(() => {
-                  // Non-critical — the share link still works without persistence
-                });
-              }
-              setShareUrl(url);
-              setShareCopied(false);
-              setShowShareDialog(true);
-              trackEvent("share_link_created");
-            }}
-            className="mt-4 rounded-xl px-5 py-3 text-base font-semibold text-white"
-            style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
-          >
-            👥 Share with Caregiver
-          </button>
-        </div>
       </div>
 
       {/* Share Dialog (Modal) — shown when user generates a share link
@@ -1040,7 +983,7 @@ export default function CarePlanPage() {
       )}
 
       {/* Disclaimer Footer */}
-      <footer className="px-6 py-6 text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
+      <footer className="px-4 py-4 text-center text-[10px]" style={{ color: "var(--color-text-muted)" }}>
         <p>
           CareAfter does not provide medical advice, diagnosis, or treatment. This care plan is based on your
           discharge papers. Always follow your doctor&apos;s instructions.
