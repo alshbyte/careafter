@@ -49,12 +49,15 @@ export default function CarePlanPage() {
   const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "ai"; text: string }>>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const { plan, savePlan, clearAllData } = useCarePlan();
+  const { plan, loading: planLoading, savePlan, clearAllData } = useCarePlan();
   const { canInstall, isInstalled, install, isIOS } = useInstallPrompt();
   const { trackEvent } = useAnalytics();
 
   // Load data: prefer encrypted IndexedDB, fall back to sessionStorage
   useEffect(() => {
+    // Wait for the hook to finish loading from IndexedDB
+    if (planLoading) return;
+
     if (plan) {
       setData(plan.dischargeData);
       setMedsTaken(
@@ -75,7 +78,7 @@ export default function CarePlanPage() {
     savePlan(parsed).then(() => {
       sessionStorage.removeItem("careafter_confirmed");
     });
-  }, [plan, router, savePlan]);
+  }, [plan, planLoading, router, savePlan]);
 
   const handleExplain = async (term: string, context: string) => {
     setExplaining(term);

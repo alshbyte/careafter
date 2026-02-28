@@ -122,7 +122,11 @@ export default function ScanPage() {
       sessionStorage.setItem("careafter_extraction", JSON.stringify(result));
       router.push("/confirm");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+      const raw = err instanceof Error ? err.message : "Something went wrong";
+      // Make 429 quota errors user-friendly
+      const msg = raw.includes("429") || raw.includes("quota")
+        ? "Our AI service is temporarily at capacity. Please try again in a few minutes."
+        : raw;
       setErrorMessage(msg);
       setState("error");
     }
