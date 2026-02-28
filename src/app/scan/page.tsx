@@ -203,7 +203,6 @@ export default function ScanPage() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               onChange={handleFileUpload}
               className="hidden"
               aria-label="Upload photo of discharge summary"
