@@ -88,6 +88,42 @@ export default function ConfirmPage() {
           </p>
         </div>
 
+        {/* Diagnosis */}
+        {data.diagnosis && (
+          <div
+            className="rounded-2xl p-5"
+            style={{ backgroundColor: "var(--color-surface)" }}
+          >
+            <h3 className="mb-2 text-lg font-bold" style={{ color: "var(--color-text)" }}>
+              🏥 Diagnosis
+            </h3>
+            <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
+              {data.diagnosis}
+            </p>
+            {data.dischargeDate && (
+              <p className="mt-2 text-sm" style={{ color: "var(--color-text-muted)" }}>
+                Discharged: {data.dischargeDate}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Missing data warning */}
+        {!(data.medications?.length) && !(data.followUps?.length) && !(data.warningsSigns?.length) && !(data.restrictions?.length) && (
+          <div
+            className="rounded-2xl border-2 p-5"
+            style={{ borderColor: "var(--color-caution)", backgroundColor: "var(--color-surface)" }}
+          >
+            <p className="text-base font-medium" style={{ color: "var(--color-caution)" }}>
+              ⚠️ We could only find basic info from this page.
+            </p>
+            <p className="mt-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              Your discharge summary may have multiple pages. Try scanning the pages that list your
+              <strong> medications</strong>, <strong>follow-up appointments</strong>, and <strong>warning signs</strong> for a complete care plan.
+            </p>
+          </div>
+        )}
+
         {/* Medications */}
         {(data.medications?.length ?? 0) > 0 && (
           <Section title="💊 Medications" count={data.medications?.length ?? 0}>
