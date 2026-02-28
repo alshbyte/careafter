@@ -43,6 +43,7 @@ export default function CarePlanPage() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
   // Q&A state
   const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "ai"; text: string }>>([]);
   const [chatInput, setChatInput] = useState("");
@@ -155,8 +156,16 @@ export default function CarePlanPage() {
 
   if (!data) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p style={{ color: "var(--color-text-secondary)" }}>Loading your care plan...</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6">
+        <div className="text-5xl animate-pulse-gentle">💚</div>
+        <p className="text-lg font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          Loading your care plan...
+        </p>
+        <div className="w-48 space-y-3">
+          <div className="skeleton h-4 w-full rounded" />
+          <div className="skeleton h-4 w-3/4 rounded" />
+          <div className="skeleton h-4 w-5/6 rounded" />
+        </div>
       </div>
     );
   }
@@ -201,23 +210,35 @@ export default function CarePlanPage() {
         </a>
       </div>
 
-      {/* Tab Navigation */}
-      <nav className="sticky top-0 z-10 px-4 py-2 shadow-sm" style={{ backgroundColor: "var(--color-surface)" }}>
+      {/* Tab Navigation — pill style with horizontal scroll */}
+      <nav
+        className="sticky top-0 z-10 overflow-x-auto px-4 py-3 shadow-sm"
+        style={{ backgroundColor: "var(--color-surface)", WebkitOverflowScrolling: "touch" }}
+      >
         <div className="mx-auto flex max-w-2xl gap-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex-1 rounded-xl px-3 py-3 text-sm font-semibold transition-all"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-semibold transition-all"
               style={{
-                backgroundColor: activeTab === tab.id ? "var(--color-primary)" : "transparent",
+                backgroundColor: activeTab === tab.id ? "var(--color-primary)" : "var(--color-surface-alt)",
                 color: activeTab === tab.id ? "white" : "var(--color-text-secondary)",
                 minHeight: "var(--touch-target)",
+                boxShadow: activeTab === tab.id ? "0 2px 8px rgba(15, 118, 110, 0.3)" : "none",
               }}
             >
               {tab.label}
               {tab.count > 0 && (
-                <span className="ml-1 text-xs opacity-75">({tab.count})</span>
+                <span
+                  className="inline-flex h-5 min-w-5 items-center justify-center rounded-full text-xs font-bold"
+                  style={{
+                    backgroundColor: activeTab === tab.id ? "rgba(255,255,255,0.25)" : "var(--color-border)",
+                    color: activeTab === tab.id ? "white" : "var(--color-text-muted)",
+                  }}
+                >
+                  {tab.count}
+                </span>
               )}
             </button>
           ))}
@@ -226,8 +247,59 @@ export default function CarePlanPage() {
 
       {/* Content */}
       <div className="mx-auto max-w-2xl px-6 py-6">
-        {/* 📅 Add to Calendar — the simplest, most reliable reminder method */}
-        {!calendarAdded && (data.medications?.length ?? 0) > 0 && (
+
+        {/* ── Setup Actions (collapsible) ── */}
+        {(() => {
+          const hasSetupItems = (
+            (!calendarAdded && (data.medications?.length ?? 0) > 0) ||
+            (showNotifPrompt && permission === "default") ||
+            (canInstall && !isInstalled) ||
+            (isIOS && !isInstalled)
+          );
+          if (!hasSetupItems && !calendarAdded && !pushSubscribed) return null;
+
+          return (
+            <div className="mb-6">
+              {/* Collapsed: show a compact setup bar */}
+              {!showSetup && hasSetupItems && (
+                <button
+                  onClick={() => setShowSetup(true)}
+                  className="flex w-full items-center justify-between rounded-2xl px-5 py-4 text-left"
+                  style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">⚙️</span>
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                        Set up reminders & more
+                      </p>
+                      <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                        Calendar, notifications, install app
+                      </p>
+                    </div>
+                  </div>
+                  <span style={{ color: "var(--color-primary)" }}>▾</span>
+                </button>
+              )}
+
+              {/* Expanded setup items */}
+              {showSetup && (
+                <div className="animate-slide-up space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold" style={{ color: "var(--color-text-muted)" }}>
+                      SETUP
+                    </h3>
+                    <button
+                      onClick={() => setShowSetup(false)}
+                      className="rounded-lg px-3 py-1 text-xs font-medium"
+                      style={{ color: "var(--color-text-muted)" }}
+                    >
+                      Hide ▴
+                    </button>
+                  </div>
+
+                  {/* Calendar */}
+                  {!calendarAdded && (data.medications?.length ?? 0) > 0 && (
           <div
             className="mb-6 rounded-2xl border-2 p-5"
             style={{ borderColor: "var(--color-primary)", backgroundColor: "var(--color-surface)" }}
@@ -356,7 +428,7 @@ export default function CarePlanPage() {
         {/* Push Reminders Active Badge */}
         {pushSubscribed && permission === "granted" && (
           <div
-            className="mb-6 flex items-center gap-3 rounded-2xl p-4"
+            className="flex items-center gap-3 rounded-2xl p-4"
             style={{ backgroundColor: "var(--color-surface)" }}
           >
             <span className="text-2xl">✅</span>
@@ -374,7 +446,7 @@ export default function CarePlanPage() {
         {/* PWA Install Banner */}
         {canInstall && !isInstalled && (
           <div
-            className="mb-6 rounded-2xl p-5"
+            className="rounded-2xl p-5"
             style={{ backgroundColor: "var(--color-surface-alt)" }}
           >
             <p className="text-base font-medium" style={{ color: "var(--color-text)" }}>
@@ -393,7 +465,7 @@ export default function CarePlanPage() {
         {/* iOS Install Instructions */}
         {isIOS && !isInstalled && (
           <div
-            className="mb-6 rounded-2xl p-5"
+            className="rounded-2xl p-5"
             style={{ backgroundColor: "var(--color-surface-alt)" }}
           >
             <p className="text-base" style={{ color: "var(--color-text)" }}>
@@ -401,6 +473,30 @@ export default function CarePlanPage() {
             </p>
           </div>
         )}
+                </div>
+              )}
+
+              {/* Compact status badges (shown when setup is collapsed) */}
+              {!showSetup && calendarAdded && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
+                    style={{ backgroundColor: "var(--color-surface)", color: "var(--color-safe)" }}>
+                    📅 Calendar added
+                  </span>
+                  {pushSubscribed && (
+                    <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
+                      style={{ backgroundColor: "var(--color-surface)", color: "var(--color-safe)" }}>
+                      🔔 Reminders on
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── Tab Content ── */}
+        <div className="tab-content">
 
         {/* Summary Tab */}
         {activeTab === "summary" && (
@@ -680,6 +776,7 @@ export default function CarePlanPage() {
             ))}
           </div>
         )}
+        </div>{/* end tab-content */}
       </div>
 
       {/* ── Ask About Your Discharge (Q&A Chat) ── */}
@@ -694,6 +791,31 @@ export default function CarePlanPage() {
           <p className="mt-1 text-sm" style={{ color: "var(--color-text-muted)" }}>
             Ask any question about your discharge in plain language.
           </p>
+
+          {/* Suggested questions — shown only when no messages yet */}
+          {chatMessages.length === 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                "What should I eat?",
+                "Can I drive?",
+                "When do I take my meds?",
+                "What if I miss a dose?",
+              ].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => { setChatInput(q); }}
+                  className="suggestion-chip rounded-full border px-3 py-1.5 text-sm"
+                  style={{
+                    borderColor: "var(--color-border)",
+                    color: "var(--color-primary)",
+                    backgroundColor: "var(--color-surface-alt)",
+                  }}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Chat messages */}
           {chatMessages.length > 0 && (

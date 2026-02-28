@@ -7,7 +7,7 @@ export default function HomePage() {
       <section className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
         {/* Logo / Brand */}
         <div
-          className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl text-4xl text-white"
+          className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl text-4xl text-white shadow-lg"
           style={{ backgroundColor: "var(--color-primary)" }}
           aria-hidden="true"
         >
@@ -41,13 +41,13 @@ export default function HomePage() {
         </Link>
 
         <p className="text-base" style={{ color: "var(--color-text-muted)" }}>
-          No account needed · Free forever · Your care plan is encrypted on your device
+          No account needed · Free forever · Encrypted on your device
         </p>
       </section>
 
       {/* How It Works */}
       <section
-        className="px-6 py-12"
+        className="px-6 py-14"
         style={{ backgroundColor: "var(--color-surface)" }}
         aria-labelledby="how-it-works"
       >
@@ -59,24 +59,27 @@ export default function HomePage() {
           How It Works
         </h2>
 
-        <div className="mx-auto grid max-w-3xl gap-8 md:grid-cols-3">
+        <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-3">
           <StepCard
             step="1"
             emoji="📸"
             title="Take a Photo"
             description="Snap a picture of your discharge summary. That's it — no typing required."
+            color="#0F766E"
           />
           <StepCard
             step="2"
             emoji="✨"
             title="AI Reads & Translates"
             description="We extract your medications, follow-ups, and warning signs — in any of 20 languages."
+            color="#2563EB"
           />
           <StepCard
             step="3"
             emoji="💊"
-            title="Your Personal Plan"
-            description="Get reminders, tap-to-explain, and a dashboard built just for your recovery."
+            title="Your Recovery Plan"
+            description="Get reminders, tap-to-explain, ask questions, and share with your caregiver."
+            color="#7C3AED"
           />
         </div>
       </section>
@@ -86,11 +89,11 @@ export default function HomePage() {
         <h2 id="trust" className="sr-only">
           Why trust CareAfter
         </h2>
-        <div className="mx-auto grid max-w-2xl gap-6 md:grid-cols-4">
-          <TrustBadge emoji="🔒" text="Encrypted on your device, deleted from our servers" />
-          <TrustBadge emoji="🌍" text="Available in 20 languages" />
-          <TrustBadge emoji="🚫" text="No ads. No data selling. Ever." />
-          <TrustBadge emoji="💚" text="Free for every patient" />
+        <div className="mx-auto grid max-w-2xl gap-4 sm:grid-cols-2">
+          <TrustBadge emoji="🔒" text="Encrypted on your device" detail="Deleted from our servers instantly" />
+          <TrustBadge emoji="🌍" text="20 languages" detail="AI translates your care plan" />
+          <TrustBadge emoji="🚫" text="No ads. No data selling." detail="Your health data stays yours" />
+          <TrustBadge emoji="💬" text="Ask follow-up questions" detail="AI answers from your discharge" />
         </div>
       </section>
 
@@ -100,7 +103,7 @@ export default function HomePage() {
         style={{ backgroundColor: "var(--color-danger)" }}
         role="alert"
       >
-        ⚠️ If you're having a medical emergency, call{" "}
+        ⚠️ If you&apos;re having a medical emergency, call{" "}
         <a href="tel:911" className="underline font-bold">
           911
         </a>{" "}
@@ -126,20 +129,28 @@ function StepCard({
   emoji,
   title,
   description,
+  color,
 }: {
   step: string;
   emoji: string;
   title: string;
   description: string;
+  color: string;
 }) {
   return (
     <div
-      className="rounded-2xl p-6 text-center"
-      style={{ backgroundColor: "var(--color-surface-alt)", borderRadius: "var(--radius-lg)" }}
+      className="animate-fade-in rounded-2xl p-6 text-center shadow-sm"
+      style={{
+        backgroundColor: "var(--color-surface-alt)",
+        borderRadius: "var(--radius-lg)",
+        borderTop: `4px solid ${color}`,
+        animationDelay: `${(parseInt(step) - 1) * 0.1}s`,
+        animationFillMode: "both",
+      }}
     >
       <div
         className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
-        style={{ backgroundColor: "var(--color-primary)" }}
+        style={{ backgroundColor: color }}
       >
         {step}
       </div>
@@ -156,15 +167,23 @@ function StepCard({
   );
 }
 
-function TrustBadge({ emoji, text }: { emoji: string; text: string }) {
+function TrustBadge({ emoji, text, detail }: { emoji: string; text: string; detail: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl p-4" style={{ backgroundColor: "var(--color-surface)" }}>
-      <span className="text-2xl" aria-hidden="true">
+    <div
+      className="flex items-start gap-3 rounded-xl p-4"
+      style={{ backgroundColor: "var(--color-surface)" }}
+    >
+      <span className="mt-0.5 text-2xl" aria-hidden="true">
         {emoji}
       </span>
-      <span className="text-base font-medium" style={{ color: "var(--color-text-secondary)" }}>
-        {text}
-      </span>
+      <div>
+        <span className="text-base font-semibold" style={{ color: "var(--color-text)" }}>
+          {text}
+        </span>
+        <p className="mt-0.5 text-sm" style={{ color: "var(--color-text-muted)" }}>
+          {detail}
+        </p>
+      </div>
     </div>
   );
 }
