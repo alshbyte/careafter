@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     const result = await extractDischargeData(image, apiKey, language);
 
     if (!result.success) {
+      console.error("Extraction failed:", result.error);
       return NextResponse.json(
         { success: false, error: result.error },
         { status: 500 }

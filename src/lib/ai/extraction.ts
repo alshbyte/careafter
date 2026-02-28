@@ -74,42 +74,48 @@ export async function extractDischargeData(
 ): Promise<ExtractionResult> {
   const startTime = Date.now();
   const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+  // Trim the key to remove any accidental whitespace/newlines
+  const cleanKey = apiKey.trim();
+
+  // Auto-detect MIME type from base64 header, or default to jpeg
+  const mimeType = detectMimeType(imageBase64);
 
   try {
-    const response = await fetch(
-      `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: buildSystemPrompt(language) }],
-          },
-          contents: [
-            {
-              parts: [
-                { text: buildExtractionPrompt(language) },
-                {
-                  inlineData: {
-                    mimeType: "image/jpeg",
-                    data: imageBase64,
-                  },
+    const url = `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${cleanKey}`;
+    console.log(`[Gemini] Calling model=${model}, mimeType=${mimeType}, imageSize=${imageBase64.length} chars`);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: buildSystemPrompt(language) }],
+        },
+        contents: [
+          {
+            parts: [
+              { text: buildExtractionPrompt(language) },
+              {
+                inlineData: {
+                  mimeType,
+                  data: imageBase64,
                 },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 4096,
-            responseMimeType: "application/json",
+              },
+            ],
           },
-        }),
-      }
-    );
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 4096,
+          responseMimeType: "application/json",
+        },
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Gemini API error: ${response.status} ${errorText}`);
+      console.error(`[Gemini] API error ${response.status}:`, errorText.substring(0, 500));
+      throw new Error(`Gemini API error: ${response.status} ${errorText.substring(0, 200)}`);
     }
 
     const result = await response.json();
@@ -144,6 +150,7 @@ export async function explainTerm(
   language?: string
 ): Promise<string> {
   const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+  const cleanKey = apiKey.trim();
   const langName = language && language !== "en" ? getLanguageNameForAI(language) : null;
   const langInstruction = langName
     ? `Respond ENTIRELY in ${langName}. `
@@ -153,7 +160,7 @@ export async function explainTerm(
     : `Always end with: "Ask your doctor or pharmacist if you have questions about ${term}."`;
 
   const response = await fetch(
-    `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`,
+    `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${cleanKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -191,6 +198,15 @@ ${askDoctor}`,
     result.candidates?.[0]?.content?.parts?.[0]?.text ??
     "Unable to explain this term."
   );
+}
+
+/** Detect image MIME type from base64 data */
+function detectMimeType(base64: string): string {
+  if (base64.startsWith("/9j/")) return "image/jpeg";
+  if (base64.startsWith("iVBOR")) return "image/png";
+  if (base64.startsWith("R0lGO")) return "image/gif";
+  if (base64.startsWith("UklGR")) return "image/webp";
+  return "image/jpeg"; // default fallback
 }
 
 function assignIds(data: DischargeData): DischargeData {

@@ -106,7 +106,10 @@ export default function ScanPage() {
         body: JSON.stringify({ image: base64, language: selectedLanguage }),
       });
 
-      if (!response.ok) throw new Error("Extraction failed");
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(errBody.error || `Server error ${response.status}`);
+      }
 
       const result = await response.json();
 
@@ -118,8 +121,9 @@ export default function ScanPage() {
       // Store in sessionStorage for the confirm page
       sessionStorage.setItem("careafter_extraction", JSON.stringify(result));
       router.push("/confirm");
-    } catch {
-      setErrorMessage("Something went wrong. Please try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setErrorMessage(msg);
       setState("error");
     }
   }, [capturedImage, router, selectedLanguage]);
