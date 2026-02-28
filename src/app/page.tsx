@@ -1,8 +1,12 @@
 import Link from "next/link";
+import WelcomeBack from "@/components/welcome-back";
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col" style={{ backgroundColor: "var(--color-bg)" }}>
+      {/* Welcome Back — shows if saved plan exists */}
+      <WelcomeBack />
+
       {/* Hero Section */}
       <section className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
         {/* Logo / Brand */}

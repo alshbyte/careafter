@@ -35,6 +35,7 @@ export type AnalyticsEventName =
   | "calendar_added"
   | "medication_explained"
   | "question_asked"
+  | "medication_taken"
   | "share_link_created"
   | "push_subscribed"
   | "pwa_installed"

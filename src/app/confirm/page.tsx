@@ -61,9 +61,14 @@ export default function ConfirmPage() {
         style={{ backgroundColor: "var(--color-surface)" }}
       >
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <Link href="/scan" className="text-base font-medium" style={{ color: "var(--color-primary)" }}>
-            ← Rescan
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-sm" style={{ color: "var(--color-text-muted)" }} aria-label="Home">
+              💚
+            </Link>
+            <Link href="/scan" className="text-sm font-medium" style={{ color: "var(--color-primary)" }}>
+              ← Rescan
+            </Link>
+          </div>
           <h1 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
             Review & Confirm
           </h1>

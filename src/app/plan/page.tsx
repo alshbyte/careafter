@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { DischargeData } from "@/types";
-import { SUPPORTED_LANGUAGES } from "@/types";
-import { useCarePlan, useNotifications, useInstallPrompt } from "@/hooks/use-careplan";
+import { useCarePlan, useInstallPrompt } from "@/hooks/use-careplan";
 import { downloadCalendarFile } from "@/lib/calendar/ics-generator";
 import { createShareLink } from "@/lib/sharing/share-link";
 import { saveShareLink } from "@/lib/db/careplan-store";
@@ -37,19 +37,19 @@ export default function CarePlanPage() {
   const [activeTab, setActiveTab] = useState<"summary" | "meds" | "followups" | "warnings">("summary");
   const [explaining, setExplaining] = useState<string | null>(null);
   const [explanation, setExplanation] = useState<string>("");
-  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [medsTaken, setMedsTaken] = useState<Record<string, boolean>>({});
   const [calendarAdded, setCalendarAdded] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Q&A state
   const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "ai"; text: string }>>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const { plan, savePlan } = useCarePlan();
-  const { permission, requestPermission, startReminders, pushSubscribed } = useNotifications();
+  const { plan, savePlan, clearAllData } = useCarePlan();
   const { canInstall, isInstalled, install, isIOS } = useInstallPrompt();
   const { trackEvent } = useAnalytics();
 
@@ -75,12 +75,7 @@ export default function CarePlanPage() {
     savePlan(parsed).then(() => {
       sessionStorage.removeItem("careafter_confirmed");
     });
-
-    // Show notification prompt after a brief delay (don't overwhelm)
-    if (permission === "default") {
-      setTimeout(() => setShowNotifPrompt(true), 3000);
-    }
-  }, [plan, router, savePlan, permission]);
+  }, [plan, router, savePlan]);
 
   const handleExplain = async (term: string, context: string) => {
     setExplaining(term);
@@ -179,35 +174,131 @@ export default function CarePlanPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg)" }}>
-      {/* Compact Header */}
+      {/* Navigation Header */}
       <header
-        className="px-4 pb-3 pt-4"
+        className="px-4 pb-2 pt-3"
         style={{ backgroundColor: "var(--color-primary)" }}
       >
         <div className="mx-auto max-w-2xl">
-          <div className="flex items-center justify-between">
+          {/* Top row: home, title, menu */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="flex-shrink-0 rounded-lg px-2 py-1.5 text-sm font-bold text-white/80 transition-all hover:text-white"
+              style={{ minHeight: "auto", minWidth: "auto" }}
+              aria-label="Home"
+            >
+              💚
+            </Link>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-bold text-white">
+              <h1 className="truncate text-base font-bold text-white">
                 {data.patientFirstName ? `${data.patientFirstName}'s Care Plan` : "Your Care Plan"}
                 {" "}
                 <LanguageBadge languageCode={data.language} />
               </h1>
               {data.diagnosis && (
-                <p className="truncate text-xs text-white/60">
+                <p className="truncate text-[11px] text-white/60">
                   {data.dischargeDate ?? "Recently"} · {data.diagnosis}
                 </p>
               )}
             </div>
+            <Link
+              href="/scan"
+              className="flex-shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white/90 transition-all hover:text-white"
+              style={{ backgroundColor: "rgba(255,255,255,0.15)", minHeight: "auto", minWidth: "auto" }}
+            >
+              📸 New
+            </Link>
             <a
               href="tel:911"
-              className="ml-3 flex-shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-bold text-white"
+              className="flex-shrink-0 rounded-lg px-2 py-1.5 text-xs font-bold text-white"
               style={{ backgroundColor: "var(--color-danger)", minHeight: "auto", minWidth: "auto" }}
             >
-              🚨 911
+              911
             </a>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="flex-shrink-0 rounded-lg px-2 py-1.5 text-sm text-white/80 transition-all hover:text-white"
+              style={{ minHeight: "auto", minWidth: "auto" }}
+              aria-label="Menu"
+            >
+              ⋮
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Dropdown Menu */}
+      {showMenu && (
+        <div className="relative z-50">
+          <div className="fixed inset-0" onClick={() => setShowMenu(false)} />
+          <div
+            className="absolute right-4 top-0 z-50 w-56 rounded-xl p-1 shadow-lg"
+            style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
+          >
+            <Link
+              href="/"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-left transition-all"
+              style={{ color: "var(--color-text)" }}
+              onClick={() => setShowMenu(false)}
+            >
+              🏠 Home
+            </Link>
+            <Link
+              href="/scan"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-left transition-all"
+              style={{ color: "var(--color-text)" }}
+              onClick={() => setShowMenu(false)}
+            >
+              📸 Scan New Discharge
+            </Link>
+            <hr style={{ borderColor: "var(--color-border)" }} />
+            <button
+              onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-left transition-all"
+              style={{ color: "var(--color-danger)" }}
+            >
+              🗑️ Delete All My Data
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowDeleteConfirm(false); }}
+        >
+          <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: "var(--color-surface)" }}>
+            <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>Delete all data?</h3>
+            <p className="mt-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              This will permanently delete your care plan, medication tracking, and all saved data from this device. This cannot be undone.
+            </p>
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 rounded-xl px-4 py-3 text-sm font-semibold"
+                style={{ backgroundColor: "var(--color-surface-alt)", color: "var(--color-text)" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await clearAllData();
+                  setShowDeleteConfirm(false);
+                  router.push("/");
+                }}
+                className="flex-1 rounded-xl px-4 py-3 text-sm font-bold text-white"
+                style={{ backgroundColor: "var(--color-danger)" }}
+              >
+                Delete Everything
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tab Navigation — icon + short label, equal width */}
       <nav
@@ -244,11 +335,10 @@ export default function CarePlanPage() {
         {(() => {
           const hasSetupItems = (
             (!calendarAdded && (data.medications?.length ?? 0) > 0) ||
-            (showNotifPrompt && permission === "default") ||
             (canInstall && !isInstalled) ||
             (isIOS && !isInstalled)
           );
-          if (!hasSetupItems && !calendarAdded && !pushSubscribed) return null;
+          if (!hasSetupItems && !calendarAdded) return null;
 
           return (
             <div className="mb-6">
@@ -285,181 +375,102 @@ export default function CarePlanPage() {
                     </button>
                   </div>
 
-                  {/* Calendar */}
+                  {/* Calendar — the REAL reminder system */}
                   {!calendarAdded && (data.medications?.length ?? 0) > 0 && (
-          <div
-            className="mb-6 rounded-2xl border-2 p-5"
-            style={{ borderColor: "var(--color-primary)", backgroundColor: "var(--color-surface)" }}
-          >
-            <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
-              📅 Add reminders to your calendar?
-            </h3>
-            <p className="mt-2 text-base" style={{ color: "var(--color-text-secondary)" }}>
-              Your phone&apos;s calendar will remind you to take each medication at the right time —
-              even when your phone is locked. Works with Apple Calendar, Google Calendar, and Outlook.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button
-                onClick={() => {
-                  downloadCalendarFile({
-                    medications: data.medications,
-                    followUps: data.followUps,
-                    patientName: data.patientFirstName,
-                    dischargeDate: data.dischargeDate,
-                  });
-                  setCalendarAdded(true);
-                  trackEvent("calendar_added", {
-                    medicationCount: data.medications?.length ?? 0,
-                    followUpCount: data.followUps?.length ?? 0,
-                  });
-                }}
-                className="rounded-xl px-5 py-3 text-base font-semibold text-white"
-                style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
-              >
-                📅 Add to Calendar
-              </button>
-              <button
-                onClick={() => setCalendarAdded(true)}
-                className="rounded-xl px-5 py-3 text-base"
-                style={{ color: "var(--color-text-muted)", minHeight: "var(--touch-target)" }}
-              >
-                Not now
-              </button>
-            </div>
-            <p className="mt-3 text-xs" style={{ color: "var(--color-text-muted)" }}>
-              📝 Includes {data.medications?.length} medication reminder{(data.medications?.length ?? 0) !== 1 ? "s" : ""}
-              {(data.followUps?.length ?? 0) > 0 && ` and ${data.followUps?.length} follow-up appointment${(data.followUps?.length ?? 0) !== 1 ? "s" : ""}`}
-            </p>
-          </div>
-        )}
+                    <div
+                      className="rounded-xl border-2 p-4"
+                      style={{ borderColor: "var(--color-primary)", backgroundColor: "var(--color-surface)" }}
+                    >
+                      <h3 className="text-base font-bold" style={{ color: "var(--color-text)" }}>
+                        📅 Add reminders to your calendar
+                      </h3>
+                      <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                        Your phone will remind you to take each medication — even when locked. Works with Apple Calendar, Google Calendar, and Outlook.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        <button
+                          onClick={() => {
+                            downloadCalendarFile({
+                              medications: data.medications,
+                              followUps: data.followUps,
+                              patientName: data.patientFirstName,
+                              dischargeDate: data.dischargeDate,
+                            });
+                            setCalendarAdded(true);
+                            trackEvent("calendar_added", {
+                              medicationCount: data.medications?.length ?? 0,
+                              followUpCount: data.followUps?.length ?? 0,
+                            });
+                          }}
+                          className="rounded-xl px-5 py-3 text-sm font-semibold text-white"
+                          style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
+                        >
+                          📅 Add to Calendar
+                        </button>
+                        <button
+                          onClick={() => setCalendarAdded(true)}
+                          className="rounded-xl px-5 py-3 text-sm"
+                          style={{ color: "var(--color-text-muted)", minHeight: "var(--touch-target)" }}
+                        >
+                          Not now
+                        </button>
+                      </div>
+                      <p className="mt-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+                        📝 Includes {data.medications?.length} medication reminder{(data.medications?.length ?? 0) !== 1 ? "s" : ""}
+                        {(data.followUps?.length ?? 0) > 0 && ` and ${data.followUps?.length} follow-up appointment${(data.followUps?.length ?? 0) !== 1 ? "s" : ""}`}
+                      </p>
+                    </div>
+                  )}
 
-        {/* Calendar Added Success Badge */}
-        {calendarAdded && (
-          <div
-            className="mb-6 flex items-center gap-3 rounded-2xl p-4"
-            style={{ backgroundColor: "var(--color-surface)" }}
-          >
-            <span className="text-2xl">📅</span>
-            <div>
-              <p className="font-semibold" style={{ color: "var(--color-text)" }}>
-                Reminders added to your calendar
-              </p>
-              <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                Open your calendar app to confirm the events were added
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                downloadCalendarFile({
-                  medications: data.medications,
-                  followUps: data.followUps,
-                  patientName: data.patientFirstName,
-                  dischargeDate: data.dischargeDate,
-                });
-              }}
-              className="ml-auto rounded-lg px-3 py-2 text-sm font-medium"
-              style={{ color: "var(--color-primary)" }}
-            >
-              Download again
-            </button>
-          </div>
-        )}
+                  {/* Calendar Added Success Badge */}
+                  {calendarAdded && (
+                    <div className="flex items-center gap-3 rounded-xl p-3" style={{ backgroundColor: "var(--color-surface)" }}>
+                      <span className="text-xl">📅</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>Reminders added</p>
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Open your calendar app to confirm</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          downloadCalendarFile({
+                            medications: data.medications,
+                            followUps: data.followUps,
+                            patientName: data.patientFirstName,
+                            dischargeDate: data.dischargeDate,
+                          });
+                        }}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium"
+                        style={{ color: "var(--color-primary)", minHeight: "auto", minWidth: "auto" }}
+                      >
+                        Download again
+                      </button>
+                    </div>
+                  )}
 
-        {/* Notification Opt-In Banner (double opt-in pattern) */}
-        {showNotifPrompt && permission === "default" && (
-          <div
-            className="mb-6 rounded-2xl border-2 p-5"
-            style={{ borderColor: "var(--color-primary)", backgroundColor: "var(--color-surface)" }}
-          >
-            <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
-              💊 Want medication reminders?
-            </h3>
-            <p className="mt-2 text-base" style={{ color: "var(--color-text-secondary)" }}>
-              We&apos;ll send you a gentle reminder each time it&apos;s time to take your medication —
-              even when your phone is locked. You can turn this off anytime.
-            </p>
-            <div className="mt-4 flex gap-3">
-              <button
-                onClick={async () => {
-                  const result = await requestPermission();
-                  if (result === "granted" && data) {
-                    await startReminders(
-                      (data.medications ?? []).map((m) => ({
-                        id: m.id,
-                        name: m.name,
-                        dosage: m.dosage,
-                        scheduledTimes: plan?.medicationSchedule?.find(
-                          (s) => s.medicationId === m.id
-                        )?.scheduledTimes ?? ["08:00"],
-                      }))
-                    );
-                  }
-                  setShowNotifPrompt(false);
-                }}
-                className="rounded-xl px-5 py-3 text-base font-semibold text-white"
-                style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
-              >
-                ✅ Yes, remind me
-              </button>
-              <button
-                onClick={() => setShowNotifPrompt(false)}
-                className="rounded-xl px-5 py-3 text-base"
-                style={{ color: "var(--color-text-muted)", minHeight: "var(--touch-target)" }}
-              >
-                Not now
-              </button>
-            </div>
-          </div>
-        )}
+                  {/* PWA Install Banner */}
+                  {canInstall && !isInstalled && (
+                    <div className="rounded-xl p-4" style={{ backgroundColor: "var(--color-surface-alt)" }}>
+                      <p className="text-sm font-medium" style={{ color: "var(--color-text)" }}>
+                        📱 Add CareAfter to your home screen for quick access — works offline too!
+                      </p>
+                      <button
+                        onClick={install}
+                        className="mt-2 rounded-xl px-5 py-3 text-sm font-semibold text-white"
+                        style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
+                      >
+                        Install CareAfter
+                      </button>
+                    </div>
+                  )}
 
-        {/* Push Reminders Active Badge */}
-        {pushSubscribed && permission === "granted" && (
-          <div
-            className="flex items-center gap-3 rounded-2xl p-4"
-            style={{ backgroundColor: "var(--color-surface)" }}
-          >
-            <span className="text-2xl">✅</span>
-            <div>
-              <p className="font-semibold" style={{ color: "var(--color-text)" }}>
-                Medication reminders active
-              </p>
-              <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                You&apos;ll get notifications even when your phone is locked
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* PWA Install Banner */}
-        {canInstall && !isInstalled && (
-          <div
-            className="rounded-2xl p-5"
-            style={{ backgroundColor: "var(--color-surface-alt)" }}
-          >
-            <p className="text-base font-medium" style={{ color: "var(--color-text)" }}>
-              📱 Add CareAfter to your home screen for quick access — works offline too!
-            </p>
-            <button
-              onClick={install}
-              className="mt-3 rounded-xl px-5 py-3 text-base font-semibold text-white"
-              style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
-            >
-              Install CareAfter
-            </button>
-          </div>
-        )}
-
-        {/* iOS Install Instructions */}
-        {isIOS && !isInstalled && (
-          <div
-            className="rounded-2xl p-5"
-            style={{ backgroundColor: "var(--color-surface-alt)" }}
-          >
-            <p className="text-base" style={{ color: "var(--color-text)" }}>
-              📱 To install: tap the <strong>Share</strong> button (↑) in Safari, then <strong>Add to Home Screen</strong>.
-            </p>
-          </div>
-        )}
+                  {/* iOS Install Instructions */}
+                  {isIOS && !isInstalled && (
+                    <div className="rounded-xl p-4" style={{ backgroundColor: "var(--color-surface-alt)" }}>
+                      <p className="text-sm" style={{ color: "var(--color-text)" }}>
+                        📱 To install: tap <strong>Share</strong> (↑) in Safari, then <strong>Add to Home Screen</strong>.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -470,12 +481,6 @@ export default function CarePlanPage() {
                     style={{ backgroundColor: "var(--color-surface)", color: "var(--color-safe)" }}>
                     📅 Calendar added
                   </span>
-                  {pushSubscribed && (
-                    <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
-                      style={{ backgroundColor: "var(--color-surface)", color: "var(--color-safe)" }}>
-                      🔔 Reminders on
-                    </span>
-                  )}
                 </div>
               )}
             </div>
@@ -684,17 +689,52 @@ export default function CarePlanPage() {
         {/* Medications Tab */}
         {activeTab === "meds" && (
           <div className="space-y-3">
-            <h2 className="text-base font-bold" style={{ color: "var(--color-text)" }}>
-              Your Medications
-            </h2>
-            {data.medications?.map((med) => (
+            {/* Daily progress bar */}
+            {(data.medications?.length ?? 0) > 0 && (() => {
+              const today = new Date().toISOString().split("T")[0];
+              const totalMeds = data.medications?.length ?? 0;
+              const takenToday = data.medications?.filter(m => medsTaken[`${m.id}_${today}`]).length ?? 0;
+              return (
+                <div className="rounded-xl p-3" style={{ backgroundColor: "var(--color-surface)" }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
+                      Today&apos;s Progress
+                    </span>
+                    <span className="text-sm font-bold" style={{ color: takenToday === totalMeds ? "var(--color-safe)" : "var(--color-primary)" }}>
+                      {takenToday}/{totalMeds} taken
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full" style={{ backgroundColor: "var(--color-surface-alt)" }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        backgroundColor: takenToday === totalMeds ? "var(--color-safe)" : "var(--color-primary)",
+                        width: `${totalMeds > 0 ? (takenToday / totalMeds) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+
+            {data.medications?.map((med) => {
+              const today = new Date().toISOString().split("T")[0];
+              const takenKey = `${med.id}_${today}`;
+              const isTaken = medsTaken[takenKey] ?? false;
+              const schedule = plan?.medicationSchedule?.find(s => s.medicationId === med.id);
+              const times = schedule?.scheduledTimes ?? [];
+
+              return (
               <div
                 key={med.id}
                 className="rounded-xl p-4"
-                style={{ backgroundColor: "var(--color-surface)" }}
+                style={{
+                  backgroundColor: "var(--color-surface)",
+                  borderLeft: isTaken ? "4px solid var(--color-safe)" : "4px solid var(--color-border)",
+                }}
               >
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <button
                       onClick={() => handleExplain(med.name, med.purpose ?? med.name)}
                       className="text-lg font-bold underline decoration-dotted underline-offset-4"
@@ -709,7 +749,43 @@ export default function CarePlanPage() {
                       </span>
                     )}
                   </div>
+                  {/* Taken toggle */}
+                  <button
+                    onClick={async () => {
+                      const newVal = !isTaken;
+                      setMedsTaken(prev => ({ ...prev, [takenKey]: newVal }));
+                      if (plan) {
+                        const { takeMedication } = await import("@/hooks/use-careplan").then(() => ({ takeMedication: plan ? async () => {
+                          const { markMedicationTaken } = await import("@/lib/db/careplan-store");
+                          await markMedicationTaken(plan.id, med.id, today, newVal);
+                        } : async () => {} }));
+                        await takeMedication();
+                      }
+                      trackEvent("medication_taken", { medication: med.name, taken: newVal });
+                    }}
+                    className="flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
+                    style={{
+                      backgroundColor: isTaken ? "var(--color-safe)" : "var(--color-surface-alt)",
+                      color: isTaken ? "white" : "var(--color-text-muted)",
+                      minHeight: "auto",
+                      minWidth: "auto",
+                    }}
+                  >
+                    {isTaken ? "✅ Taken" : "⭕ Take"}
+                  </button>
                 </div>
+
+                {/* Schedule times */}
+                {times.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {times.map(t => (
+                      <span key={t} className="rounded-full px-2 py-0.5 text-xs" style={{ backgroundColor: "var(--color-surface-alt)", color: "var(--color-text-muted)" }}>
+                        🕐 {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span style={{ color: "var(--color-text-muted)" }}>Dosage: </span>
@@ -761,7 +837,18 @@ export default function CarePlanPage() {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
+
+            {/* Empty state */}
+            {(data.medications?.length ?? 0) === 0 && (
+              <div className="rounded-xl p-6 text-center" style={{ backgroundColor: "var(--color-surface)" }}>
+                <p className="text-3xl">💊</p>
+                <p className="mt-2 text-sm font-medium" style={{ color: "var(--color-text-muted)" }}>
+                  No medications were found in your discharge papers.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -804,6 +891,16 @@ export default function CarePlanPage() {
                 )}
               </div>
             ))}
+
+            {/* Empty state */}
+            {(data.followUps?.length ?? 0) === 0 && (
+              <div className="rounded-xl p-6 text-center" style={{ backgroundColor: "var(--color-surface)" }}>
+                <p className="text-3xl">📅</p>
+                <p className="mt-2 text-sm font-medium" style={{ color: "var(--color-text-muted)" }}>
+                  No follow-up appointments were found in your discharge papers.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -861,6 +958,16 @@ export default function CarePlanPage() {
                 </div>
               </div>
             ))}
+
+            {/* Empty state */}
+            {(data.warningsSigns?.length ?? 0) === 0 && (
+              <div className="rounded-xl p-6 text-center" style={{ backgroundColor: "var(--color-surface)" }}>
+                <p className="text-3xl">✅</p>
+                <p className="mt-2 text-sm font-medium" style={{ color: "var(--color-text-muted)" }}>
+                  No specific warning signs were identified in your discharge papers. If something feels wrong, always call your doctor.
+                </p>
+              </div>
+            )}
           </div>
         )}
         </div>{/* end tab-content */}
