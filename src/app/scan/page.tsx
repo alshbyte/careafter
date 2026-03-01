@@ -145,7 +145,7 @@ export default function ScanPage() {
         <Link
           href="/"
           className="flex items-center justify-center rounded-xl px-3 py-2 text-base font-medium"
-          style={{ color: "var(--color-primary)", minHeight: "var(--touch-target)" }}
+          style={{ color: "var(--color-accent)", minHeight: "var(--touch-target)" }}
           aria-label="Back to home"
         >
           ← Back

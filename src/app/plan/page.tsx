@@ -358,7 +358,7 @@ export default function CarePlanPage() {
                       Set up reminders & install app
                     </span>
                   </div>
-                  <span className="text-xs" style={{ color: "var(--color-primary)" }}>Setup ▾</span>
+                  <span className="text-xs" style={{ color: "var(--color-accent)" }}>Setup ▾</span>
                 </button>
               )}
 
@@ -443,7 +443,7 @@ export default function CarePlanPage() {
                           });
                         }}
                         className="rounded-lg px-3 py-1.5 text-xs font-medium"
-                        style={{ color: "var(--color-primary)", minHeight: "auto", minWidth: "auto" }}
+                        style={{ color: "var(--color-accent)", minHeight: "auto", minWidth: "auto" }}
                       >
                         Download again
                       </button>
@@ -580,7 +580,7 @@ export default function CarePlanPage() {
                       className="suggestion-chip rounded-full border px-2.5 py-1 text-xs"
                       style={{
                         borderColor: "var(--color-border)",
-                        color: "var(--color-primary)",
+                        color: "var(--color-primary-light)",
                         backgroundColor: "var(--color-bg)",
                         minHeight: "auto",
                         minWidth: "auto",
@@ -684,7 +684,7 @@ export default function CarePlanPage() {
                   Send a read-only view to a family member
                 </p>
               </div>
-              <span style={{ color: "var(--color-primary)" }}>→</span>
+              <span style={{ color: "var(--color-accent)" }}>→</span>
             </button>
           </div>
         )}
@@ -703,7 +703,7 @@ export default function CarePlanPage() {
                     <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
                       Today&apos;s Progress
                     </span>
-                    <span className="text-sm font-bold" style={{ color: takenToday === totalMeds ? "var(--color-safe)" : "var(--color-primary)" }}>
+                    <span className="text-sm font-bold" style={{ color: takenToday === totalMeds ? "var(--color-safe)" : "var(--color-accent)" }}>
                       {takenToday}/{totalMeds} taken
                     </span>
                   </div>
@@ -741,7 +741,7 @@ export default function CarePlanPage() {
                     <button
                       onClick={() => handleExplain(med.name, med.purpose ?? med.name)}
                       className="text-lg font-bold underline decoration-dotted underline-offset-4"
-                      style={{ color: "var(--color-primary)" }}
+                      style={{ color: "var(--color-accent)" }}
                       title="Tap to learn what this medication does"
                     >
                       {med.name}
@@ -814,7 +814,7 @@ export default function CarePlanPage() {
                 {med.specialInstructions && (
                   <div
                     className="mt-3 rounded-lg p-3 text-sm font-medium"
-                    style={{ backgroundColor: "var(--color-surface-alt)", color: "var(--color-primary)" }}
+                    style={{ backgroundColor: "var(--color-surface-alt)", color: "var(--color-text-secondary)" }}
                   >
                     📝 {med.specialInstructions}
                   </div>
@@ -833,7 +833,7 @@ export default function CarePlanPage() {
                     <button
                       onClick={() => setExplaining(null)}
                       className="mt-2 text-xs underline"
-                      style={{ color: "var(--color-primary)" }}
+                      style={{ color: "var(--color-accent)" }}
                     >
                       Close
                     </button>
@@ -1070,8 +1070,8 @@ export default function CarePlanPage() {
                   className="flex-1 rounded-xl px-5 py-3 text-base font-semibold"
                   style={{
                     backgroundColor: "var(--color-surface-alt)",
-                    color: "var(--color-primary)",
-                    border: "1px solid var(--color-primary)",
+                    color: "var(--color-accent)",
+                    border: "1px solid var(--color-accent)",
                     minHeight: "var(--touch-target)",
                   }}
                 >

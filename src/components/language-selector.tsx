@@ -108,7 +108,7 @@ export function LanguageSelector({ selectedLanguage, onSelect, compact = false }
           onClick={() => setShowAll(true)}
           className="mt-3 w-full rounded-xl px-4 py-3 text-base font-medium"
           style={{
-            color: "var(--color-primary)",
+            color: "var(--color-accent)",
             backgroundColor: "var(--color-surface-alt)",
             minHeight: "var(--touch-target)",
           }}

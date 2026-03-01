@@ -65,7 +65,7 @@ export default function ConfirmPage() {
             <Link href="/" className="text-sm" style={{ color: "var(--color-text-muted)" }} aria-label="Home">
               🔬
             </Link>
-            <Link href="/scan" className="text-sm font-medium" style={{ color: "var(--color-primary)" }}>
+            <Link href="/scan" className="text-sm font-medium" style={{ color: "var(--color-accent)" }}>
               ← Rescan
             </Link>
           </div>
@@ -148,7 +148,7 @@ export default function ConfirmPage() {
                 {med.timing && <p style={{ color: "var(--color-text-secondary)" }}>⏰ {med.timing}</p>}
                 {med.duration && <p style={{ color: "var(--color-text-secondary)" }}>📅 {med.duration}</p>}
                 {med.specialInstructions && (
-                  <p className="mt-1 font-medium" style={{ color: "var(--color-primary)" }}>
+                  <p className="mt-1 font-medium" style={{ color: "var(--color-text-secondary)" }}>
                     📝 {med.specialInstructions}
                   </p>
                 )}
@@ -182,7 +182,7 @@ export default function ConfirmPage() {
                   <a
                     href={`tel:${fu.phoneNumber}`}
                     className="mt-1 inline-block text-base font-medium underline"
-                    style={{ color: "var(--color-primary)" }}
+                    style={{ color: "var(--color-accent)" }}
                   >
                     📞 {fu.phoneNumber}
                   </a>

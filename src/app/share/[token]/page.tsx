@@ -208,7 +208,7 @@ export default function SharedCarePlanPage() {
                   className="rounded-2xl p-5 shadow-sm"
                   style={{ backgroundColor: "var(--color-surface)" }}
                 >
-                  <h3 className="text-lg font-bold" style={{ color: "var(--color-primary)" }}>
+                  <h3 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
                     {med.name}
                     {med.genericName && (
                       <span className="ml-2 text-sm font-normal" style={{ color: "var(--color-text-muted)" }}>
@@ -241,7 +241,7 @@ export default function SharedCarePlanPage() {
                   {med.specialInstructions && (
                     <div
                       className="mt-3 rounded-lg p-3 text-sm font-medium"
-                      style={{ backgroundColor: "var(--color-surface-alt)", color: "var(--color-primary)" }}
+                      style={{ backgroundColor: "var(--color-surface-alt)", color: "var(--color-text-secondary)" }}
                     >
                       📝 {med.specialInstructions}
                     </div>

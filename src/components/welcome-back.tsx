@@ -67,7 +67,7 @@ export default function WelcomeBack() {
             className="flex-1 rounded-xl px-4 py-3 text-center text-sm font-semibold"
             style={{
               backgroundColor: "var(--color-surface-alt)",
-              color: "var(--color-primary)",
+              color: "var(--color-accent)",
               border: "1px solid var(--color-primary)",
               minHeight: "var(--touch-target)",
             }}
