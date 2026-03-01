@@ -15,7 +15,7 @@ export default function HomePage() {
           style={{ backgroundColor: "var(--color-primary)" }}
           aria-hidden="true"
         >
-          💚
+          🔬
         </div>
 
         <h1
@@ -30,7 +30,7 @@ export default function HomePage() {
           style={{ color: "var(--color-text-secondary)" }}
         >
           Turn your discharge papers into a{" "}
-          <strong style={{ color: "var(--color-primary)" }}>personal recovery assistant</strong> —
+          <strong style={{ color: "var(--color-accent)" }}>personal recovery assistant</strong> —
           in your language, free, private, and always available.
         </p>
 
@@ -69,21 +69,21 @@ export default function HomePage() {
             emoji="📸"
             title="Take a Photo"
             description="Snap a picture of your discharge summary. That's it — no typing required."
-            color="#0F766E"
+            color="#1E3A5F"
           />
           <StepCard
             step="2"
             emoji="✨"
             title="AI Reads & Translates"
             description="We extract your medications, follow-ups, and warning signs — in any of 20 languages."
-            color="#2563EB"
+            color="#E8A838"
           />
           <StepCard
             step="3"
             emoji="💊"
             title="Your Recovery Plan"
             description="Get reminders, tap-to-explain, ask questions, and share with your caregiver."
-            color="#7C3AED"
+            color="#2D5A8E"
           />
         </div>
       </section>

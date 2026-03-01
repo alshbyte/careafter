@@ -41,7 +41,7 @@ export default function WelcomeBack() {
         }}
       >
         <div className="flex items-start gap-3">
-          <span className="text-3xl">💚</span>
+          <span className="text-3xl">🔬</span>
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
               Welcome back{name ? `, ${name}` : ""}!

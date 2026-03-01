@@ -155,7 +155,7 @@ export default function CarePlanPage() {
   if (!data) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6">
-        <div className="text-5xl animate-pulse-gentle">💚</div>
+        <div className="text-5xl animate-pulse-gentle">🔬</div>
         <p className="text-lg font-medium" style={{ color: "var(--color-text-secondary)" }}>
           Loading your care plan...
         </p>
@@ -191,7 +191,7 @@ export default function CarePlanPage() {
               style={{ minHeight: "auto", minWidth: "auto" }}
               aria-label="Home"
             >
-              💚
+              💎
             </Link>
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-base font-bold text-white">

@@ -4,26 +4,26 @@
 /* Senior-friendly: 18px base, high contrast, large touch targets */
 
 :root {
-  /* Brand colors — teal/green = healing, trust, calm */
-  --color-primary: #0F766E;       /* teal-700 */
-  --color-primary-light: #14B8A6; /* teal-500 */
-  --color-primary-dark: #0D4F4A;
-  --color-accent: #F59E0B;        /* amber-500 — warmth, attention */
+  /* Brand colors — deep blue + gold = clinical trust + premium */
+  --color-primary: #1E3A5F;       /* navy — trust, authority */
+  --color-primary-light: #2D5A8E; /* lighter navy */
+  --color-primary-dark: #132843;
+  --color-accent: #E8A838;        /* gold — premium, warmth, attention */
 
   /* Semantic colors */
   --color-safe: #16A34A;          /* green-600 */
   --color-caution: #EAB308;       /* yellow-500 */
   --color-danger: #DC2626;        /* red-600 */
-  --color-info: #2563EB;          /* blue-600 */
+  --color-info: #3B82F6;          /* blue-500 */
 
-  /* Neutral palette — warm grays for approachability */
-  --color-bg: #FAFAF9;           /* stone-50 */
+  /* Neutral palette — cool grays for clinical feel */
+  --color-bg: #F8FAFC;           /* slate-50 */
   --color-surface: #FFFFFF;
-  --color-surface-alt: #F5F5F4;  /* stone-100 */
-  --color-border: #D6D3D1;       /* stone-300 */
-  --color-text: #1C1917;         /* stone-900 */
-  --color-text-secondary: #57534E; /* stone-600 */
-  --color-text-muted: #A8A29E;   /* stone-400 */
+  --color-surface-alt: #F1F5F9;  /* slate-100 */
+  --color-border: #CBD5E1;       /* slate-300 */
+  --color-text: #0F172A;         /* slate-900 */
+  --color-text-secondary: #475569; /* slate-600 */
+  --color-text-muted: #94A3B8;   /* slate-400 */
 
   /* Typography — senior-friendly sizes */
   --font-base: 1.125rem;         /* 18px */
@@ -41,13 +41,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #1C1917;
-    --color-surface: #292524;
-    --color-surface-alt: #44403C;
-    --color-border: #57534E;
-    --color-text: #FAFAF9;
-    --color-text-secondary: #D6D3D1;
-    --color-text-muted: #78716C;
+    --color-bg: #0F172A;
+    --color-surface: #1E293B;
+    --color-surface-alt: #334155;
+    --color-border: #475569;
+    --color-text: #F8FAFC;
+    --color-text-secondary: #CBD5E1;
+    --color-text-muted: #64748B;
   }
 }
 

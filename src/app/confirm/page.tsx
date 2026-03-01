@@ -63,7 +63,7 @@ export default function ConfirmPage() {
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-sm" style={{ color: "var(--color-text-muted)" }} aria-label="Home">
-              💚
+              🔬
             </Link>
             <Link href="/scan" className="text-sm font-medium" style={{ color: "var(--color-primary)" }}>
               ← Rescan
