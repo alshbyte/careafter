@@ -192,9 +192,9 @@ export default function ScanPage() {
                 onClick={() => fileInputRef.current?.click()}
                 className="flex w-full items-center justify-center gap-3 rounded-2xl border-2 px-6 py-4 text-lg font-semibold transition-all active:scale-[0.98]"
                 style={{
-                  borderColor: "var(--color-primary)",
-                  color: "var(--color-primary)",
-                  backgroundColor: "var(--color-surface)",
+                  borderColor: "var(--color-accent)",
+                  color: "var(--color-accent)",
+                  backgroundColor: "transparent",
                   minHeight: "var(--touch-target)",
                 }}
               >
