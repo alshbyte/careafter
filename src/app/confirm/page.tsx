@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import type { DischargeData, Medication, FollowUp, WarningSign, Restriction } from "@/types";
 import Link from "next/link";
 import { useAnalytics } from "@/components/analytics-provider";
+import { useTranslation } from "@/lib/i18n/use-translation";
+import type { UITranslations } from "@/lib/i18n/translations";
 
 const CONFIDENCE_STYLES = {
   high: { bg: "#DCFCE7", border: "#16A34A", label: "✅ High confidence" },
@@ -17,6 +19,7 @@ export default function ConfirmPage() {
   const [data, setData] = useState<DischargeData | null>(null);
   const [processingTime, setProcessingTime] = useState(0);
   const { trackEvent } = useAnalytics();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const stored = sessionStorage.getItem("medlens_extraction");
@@ -66,11 +69,11 @@ export default function ConfirmPage() {
               🔬
             </Link>
             <Link href="/scan" className="text-sm font-medium" style={{ color: "var(--color-accent)" }}>
-              ← Rescan
+              {t.confirm.rescan}
             </Link>
           </div>
           <h1 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
-            Review & Confirm
+            {t.confirm.title}
           </h1>
           <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>
             {(processingTime / 1000).toFixed(1)}s
@@ -100,7 +103,7 @@ export default function ConfirmPage() {
             style={{ backgroundColor: "var(--color-surface)" }}
           >
             <h3 className="mb-2 text-lg font-bold" style={{ color: "var(--color-text)" }}>
-              🏥 Diagnosis
+              🏥 {t.confirm.diagnosisLabel}
             </h3>
             <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
               {data.diagnosis}
@@ -131,9 +134,9 @@ export default function ConfirmPage() {
 
         {/* Medications */}
         {(data.medications?.length ?? 0) > 0 && (
-          <Section title="💊 Medications" count={data.medications?.length ?? 0}>
+          <Section title={`💊 ${t.confirm.medicationsLabel}`} count={data.medications?.length ?? 0}>
             {data.medications?.map((med, i) => (
-              <ConfidenceCard key={med.id ?? i} confidence={med.confidence}>
+              <ConfidenceCard key={med.id ?? i} confidence={med.confidence} t={t}>
                 <h4 className="text-lg font-semibold" style={{ color: "var(--color-text)" }}>
                   {med.name}
                 </h4>
@@ -164,9 +167,9 @@ export default function ConfirmPage() {
 
         {/* Follow-ups */}
         {(data.followUps?.length ?? 0) > 0 && (
-          <Section title="📅 Follow-Up Appointments" count={data.followUps?.length ?? 0}>
+          <Section title={`📅 ${t.confirm.followUpsLabel}`} count={data.followUps?.length ?? 0}>
             {data.followUps?.map((fu, i) => (
-              <ConfidenceCard key={fu.id ?? i} confidence={fu.confidence}>
+              <ConfidenceCard key={fu.id ?? i} confidence={fu.confidence} t={t}>
                 <h4 className="text-lg font-semibold" style={{ color: "var(--color-text)" }}>
                   {fu.provider}
                 </h4>
@@ -194,9 +197,9 @@ export default function ConfirmPage() {
 
         {/* Warning Signs */}
         {(data.warningsSigns?.length ?? 0) > 0 && (
-          <Section title="⚠️ Warning Signs to Watch For" count={data.warningsSigns?.length ?? 0}>
+          <Section title={`⚠️ ${t.confirm.warningsLabel}`} count={data.warningsSigns?.length ?? 0}>
             {data.warningsSigns?.map((ws, i) => (
-              <ConfidenceCard key={ws.id ?? i} confidence={ws.confidence}>
+              <ConfidenceCard key={ws.id ?? i} confidence={ws.confidence} t={t}>
                 <div className="flex items-start gap-3">
                   <span className="text-2xl" aria-hidden="true">
                     {ws.severity === "urgent" ? "🚨" : ws.severity === "important" ? "⚠️" : "ℹ️"}
@@ -229,7 +232,7 @@ export default function ConfirmPage() {
         {(data.restrictions?.length ?? 0) > 0 && (
           <Section title="🚫 Restrictions" count={data.restrictions?.length ?? 0}>
             {data.restrictions?.map((r, i) => (
-              <ConfidenceCard key={r.id ?? i} confidence={r.confidence}>
+              <ConfidenceCard key={r.id ?? i} confidence={r.confidence} t={t}>
                 <p className="font-semibold" style={{ color: "var(--color-text)" }}>
                   {r.description}
                 </p>
@@ -247,7 +250,7 @@ export default function ConfirmPage() {
         {!data.restrictions?.length && (data.activityRestrictions?.length ?? 0) > 0 && (
           <Section title="🚫 Restrictions" count={data.activityRestrictions?.length ?? 0}>
             {data.activityRestrictions?.map((r, i) => (
-              <ConfidenceCard key={i} confidence="medium">
+              <ConfidenceCard key={i} confidence="medium" t={t}>
                 <p className="font-semibold" style={{ color: "var(--color-text)" }}>
                   {r}
                 </p>
@@ -263,10 +266,10 @@ export default function ConfirmPage() {
             className="w-full rounded-2xl px-6 py-5 text-xl font-bold text-white shadow-lg transition-all active:scale-[0.98]"
             style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
           >
-            ✅ Looks Good — Create My Care Plan
+            {t.confirm.confirmButton}
           </button>
           <p className="mt-3 text-center text-sm" style={{ color: "var(--color-text-muted)" }}>
-            You can always edit your care plan later.
+            {t.confirm.subtitle}
           </p>
         </div>
       </div>
@@ -291,9 +294,11 @@ function Section({ title, count, children }: { title: string; count: number; chi
 function ConfidenceCard({
   confidence,
   children,
+  t,
 }: {
   confidence: number | "high" | "medium" | "low" | undefined;
   children: React.ReactNode;
+  t: UITranslations;
 }) {
   // Convert numeric confidence (0-1) to category
   let level: "high" | "medium" | "low";
@@ -305,13 +310,18 @@ function ConfidenceCard({
     level = "medium"; // Default for missing confidence
   }
   const style = CONFIDENCE_STYLES[level];
+  const labelMap: Record<string, string> = {
+    high: "✅ " + t.confirm.highConfidence,
+    medium: "⚠️ " + t.confirm.medConfidence,
+    low: "❌ " + t.confirm.lowConfidence,
+  };
   return (
     <div
       className="rounded-xl border-l-4 p-4"
       style={{ backgroundColor: style.bg, borderColor: style.border }}
     >
       <div className="mb-2 text-xs font-medium" style={{ color: style.border }}>
-        {style.label}
+        {labelMap[level]}
       </div>
       {children}
     </div>

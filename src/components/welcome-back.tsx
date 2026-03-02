@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadLatestCarePlan } from "@/lib/db/careplan-store";
 import type { CarePlan } from "@/types";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 /**
  * Shows a "Welcome back" banner if the user has a saved care plan in IndexedDB.
@@ -12,6 +13,7 @@ import type { CarePlan } from "@/types";
 export default function WelcomeBack() {
   const [savedPlan, setSavedPlan] = useState<CarePlan | null>(null);
   const [checked, setChecked] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadLatestCarePlan()
@@ -44,10 +46,10 @@ export default function WelcomeBack() {
           <span className="text-3xl">🔬</span>
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-bold" style={{ color: "var(--color-text)" }}>
-              Welcome back{name ? `, ${name}` : ""}!
+              {t.welcomeBack.greeting}{name ? `, ${name}` : ""}!
             </h2>
             <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-              Your care plan is saved on this device.
+              {t.welcomeBack.savedMessage}
               {medCount > 0 && ` ${medCount} medication${medCount !== 1 ? "s" : ""} tracked.`}
               {date && ` Discharged ${date}.`}
             </p>
@@ -60,7 +62,7 @@ export default function WelcomeBack() {
             className="flex-1 rounded-xl px-4 py-3 text-center text-sm font-semibold text-white"
             style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
           >
-            📋 View My Care Plan
+            {t.welcomeBack.viewPlan}
           </Link>
           <Link
             href="/scan"
@@ -72,7 +74,7 @@ export default function WelcomeBack() {
               minHeight: "var(--touch-target)",
             }}
           >
-            📸 Scan New
+            {t.welcomeBack.scanNew}
           </Link>
         </div>
       </div>

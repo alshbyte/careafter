@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { I18nProvider } from "@/lib/i18n/use-translation";
 
 export const metadata: Metadata = {
   title: "MedLens — Your Recovery Assistant",
@@ -38,12 +39,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen antialiased">
         <AnalyticsProvider>
-          <a href="#main" className="skip-link">
-            Skip to main content
-          </a>
-          <ErrorBoundary>
-            <main id="main">{children}</main>
-          </ErrorBoundary>
+          <I18nProvider>
+            <a href="#main" className="skip-link">
+              Skip to main content
+            </a>
+            <ErrorBoundary>
+              <main id="main">{children}</main>
+            </ErrorBoundary>
+          </I18nProvider>
         </AnalyticsProvider>
       </body>
     </html>

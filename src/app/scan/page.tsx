@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAnalytics } from "@/components/analytics-provider";
 import { LanguageSelector } from "@/components/language-selector";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/types";
+import { useTranslation } from "@/lib/i18n/use-translation";
 
 type CaptureState = "idle" | "camera" | "preview" | "uploading" | "error";
 
@@ -13,7 +14,7 @@ export default function ScanPage() {
   const [state, setState] = useState<CaptureState>("idle");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const { language, setLanguage, t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,15 +25,12 @@ export default function ScanPage() {
   // Track scan_started when the page mounts
   useEffect(() => {
     trackEvent("scan_started");
-    // Restore language preference from sessionStorage
-    const savedLang = sessionStorage.getItem("medlens_language");
-    if (savedLang) setSelectedLanguage(savedLang);
   }, [trackEvent]);
 
   const handleLanguageSelect = useCallback((lang: SupportedLanguage) => {
-    setSelectedLanguage(lang.code);
+    setLanguage(lang.code);
     sessionStorage.setItem("medlens_language", lang.code);
-  }, []);
+  }, [setLanguage]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -103,7 +101,7 @@ export default function ScanPage() {
       const response = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, language: selectedLanguage }),
+        body: JSON.stringify({ image: base64, language }),
       });
 
       if (!response.ok) {
@@ -115,7 +113,7 @@ export default function ScanPage() {
 
       // Attach language to the extracted data so downstream pages know
       if (result.data) {
-        result.data.language = selectedLanguage;
+        result.data.language = language;
       }
 
       // Store in sessionStorage for the confirm page
@@ -130,7 +128,7 @@ export default function ScanPage() {
       setErrorMessage(msg);
       setState("error");
     }
-  }, [capturedImage, router, selectedLanguage]);
+  }, [capturedImage, router, language]);
 
   const retake = useCallback(() => {
     setCapturedImage(null);
@@ -148,7 +146,7 @@ export default function ScanPage() {
           style={{ color: "var(--color-accent)", minHeight: "var(--touch-target)" }}
           aria-label="Back to home"
         >
-          ← Back
+          {t.scan.backButton}
         </Link>
         <h1 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>
           Scan Your Papers
@@ -161,10 +159,10 @@ export default function ScanPage() {
           <div className="w-full max-w-md space-y-6 text-center">
             <div className="text-6xl" aria-hidden="true">📄</div>
             <h2 className="text-2xl font-bold" style={{ color: "var(--color-text)" }}>
-              Take a photo of your discharge summary
+              {t.scan.title}
             </h2>
             <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
-              Make sure all the text is readable. You can take multiple photos if needed.
+              {t.scan.subtitle}
             </p>
 
             {/* Language Selector */}
@@ -173,7 +171,7 @@ export default function ScanPage() {
               style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}
             >
               <LanguageSelector
-                selectedLanguage={selectedLanguage}
+                selectedLanguage={language}
                 onSelect={handleLanguageSelect}
               />
             </div>
@@ -185,7 +183,7 @@ export default function ScanPage() {
                 style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
               >
                 <span aria-hidden="true">📷</span>
-                Open Camera
+                {t.scan.openCamera}
               </button>
 
               <button
@@ -199,7 +197,7 @@ export default function ScanPage() {
                 }}
               >
                 <span aria-hidden="true">📁</span>
-                Upload a Photo
+                {t.scan.uploadPhoto}
               </button>
             </div>
 
@@ -213,7 +211,7 @@ export default function ScanPage() {
             />
 
             <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-              🔒 Your photo is processed securely and never stored on our servers.
+              🔒 {t.scan.securityNote}
             </p>
           </div>
         )}
@@ -296,13 +294,13 @@ export default function ScanPage() {
           <div className="text-center space-y-6">
             <div className="text-6xl animate-pulse" aria-hidden="true">✨</div>
             <h2 className="text-2xl font-bold" style={{ color: "var(--color-text)" }}>
-              {selectedLanguage !== "en"
+              {language !== "en"
                 ? `Reading & translating your papers...`
-                : "Reading your discharge papers..."}
+                : t.scan.analyzing}
             </h2>
             <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
-              {selectedLanguage !== "en"
-                ? `Extracting your medications, follow-ups, and warning signs — and translating into ${SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.nativeName ?? "your language"}.`
+              {language !== "en"
+                ? `Extracting your medications, follow-ups, and warning signs — and translating into ${SUPPORTED_LANGUAGES.find(l => l.code === language)?.nativeName ?? "your language"}.`
                 : "This usually takes about 10 seconds. We're extracting your medications, follow-ups, and warning signs."}
             </p>
             <div
@@ -322,7 +320,7 @@ export default function ScanPage() {
           <div className="w-full max-w-md space-y-6 text-center">
             <div className="text-6xl" aria-hidden="true">😔</div>
             <h2 className="text-2xl font-bold" style={{ color: "var(--color-text)" }}>
-              Something went wrong
+              {t.scan.errorTitle}
             </h2>
             <p className="text-base" style={{ color: "var(--color-text-secondary)" }}>
               {errorMessage}
@@ -332,7 +330,7 @@ export default function ScanPage() {
               className="rounded-2xl px-8 py-4 text-lg font-semibold text-white shadow-md"
               style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
             >
-              Try Again
+              {t.scan.tryAgain}
             </button>
           </div>
         )}

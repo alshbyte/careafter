@@ -1,11 +1,28 @@
+"use client";
+
 import Link from "next/link";
 import WelcomeBack from "@/components/welcome-back";
+import { useTranslation } from "@/lib/i18n/use-translation";
+import { LanguageSelector } from "@/components/language-selector";
+import { type SupportedLanguage } from "@/types";
 
 export default function HomePage() {
+  const { t, language, setLanguage } = useTranslation();
+
   return (
     <div className="flex min-h-screen flex-col" style={{ backgroundColor: "var(--color-bg)" }}>
       {/* Welcome Back — shows if saved plan exists */}
       <WelcomeBack />
+
+      {/* Language Selector — first thing users see */}
+      <section className="px-6 pt-6">
+        <div className="mx-auto max-w-md rounded-2xl p-4" style={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)" }}>
+          <LanguageSelector
+            selectedLanguage={language}
+            onSelect={(lang: SupportedLanguage) => setLanguage(lang.code)}
+          />
+        </div>
+      </section>
 
       {/* Hero Section */}
       <section className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
@@ -22,16 +39,14 @@ export default function HomePage() {
           className="mb-4 text-4xl font-bold tracking-tight"
           style={{ color: "var(--color-text)" }}
         >
-          MedLens
+          {t.landing.heroTitle}
         </h1>
 
         <p
           className="mx-auto mb-8 max-w-md text-xl leading-relaxed"
           style={{ color: "var(--color-text-secondary)" }}
         >
-          Turn your discharge papers into a{" "}
-          <strong style={{ color: "var(--color-accent)" }}>personal recovery assistant</strong> —
-          in your language, free, private, and always available.
+          {t.landing.heroSubtitle}
         </p>
 
         {/* The Magic Moment CTA */}
@@ -40,12 +55,11 @@ export default function HomePage() {
           className="mb-6 inline-flex items-center gap-3 rounded-2xl px-8 py-5 text-xl font-semibold text-white shadow-lg transition-all hover:shadow-xl active:scale-[0.98]"
           style={{ backgroundColor: "var(--color-primary)", minHeight: "var(--touch-target)" }}
         >
-          <span className="text-2xl" aria-hidden="true">📸</span>
-          Scan Your Discharge Papers
+          {t.landing.ctaButton}
         </Link>
 
         <p className="text-base" style={{ color: "var(--color-text-muted)" }}>
-          No account needed · Free forever · Encrypted on your device
+          {t.landing.ctaSubtext}
         </p>
       </section>
 
@@ -67,22 +81,22 @@ export default function HomePage() {
           <StepCard
             step="1"
             emoji="📸"
-            title="Take a Photo"
-            description="Snap a picture of your discharge summary. That's it — no typing required."
+            title={t.landing.step1Title}
+            description={t.landing.step1Desc}
             color="#1E3A5F"
           />
           <StepCard
             step="2"
             emoji="✨"
-            title="AI Reads & Translates"
-            description="We extract your medications, follow-ups, and warning signs — in any of 20 languages."
+            title={t.landing.step2Title}
+            description={t.landing.step2Desc}
             color="#E8A838"
           />
           <StepCard
             step="3"
             emoji="💊"
-            title="Your Recovery Plan"
-            description="Get reminders, tap-to-explain, ask questions, and share with your caregiver."
+            title={t.landing.step3Title}
+            description={t.landing.step3Desc}
             color="#2D5A8E"
           />
         </div>
@@ -94,10 +108,10 @@ export default function HomePage() {
           Why trust MedLens
         </h2>
         <div className="mx-auto grid max-w-2xl gap-4 sm:grid-cols-2">
-          <TrustBadge emoji="🔒" text="Encrypted on your device" detail="Deleted from our servers instantly" />
-          <TrustBadge emoji="🌍" text="20 languages" detail="AI translates your care plan" />
-          <TrustBadge emoji="🚫" text="No ads. No data selling." detail="Your health data stays yours" />
-          <TrustBadge emoji="💬" text="Ask follow-up questions" detail="AI answers from your discharge" />
+          <TrustBadge emoji="🔒" text={t.landing.trustEncrypted} detail={t.landing.trustEncryptedDetail} />
+          <TrustBadge emoji="🌍" text={t.landing.trustLanguages} detail={t.landing.trustLanguagesDetail} />
+          <TrustBadge emoji="🚫" text={t.landing.trustNoAds} detail={t.landing.trustNoAdsDetail} />
+          <TrustBadge emoji="💬" text={t.landing.trustChat} detail={t.landing.trustChatDetail} />
         </div>
       </section>
 
@@ -107,11 +121,10 @@ export default function HomePage() {
         style={{ backgroundColor: "var(--color-danger)" }}
         role="alert"
       >
-        ⚠️ If you&apos;re having a medical emergency, call{" "}
+        {t.common.emergency.replace("911", "")}{" "}
         <a href="tel:911" className="underline font-bold">
           911
-        </a>{" "}
-        immediately.
+        </a>
       </div>
 
       {/* Footer */}
@@ -120,9 +133,9 @@ export default function HomePage() {
         style={{ color: "var(--color-text-muted)" }}
       >
         <p>
-          MedLens does not provide medical advice. Always consult your healthcare provider.
+          {t.landing.disclaimer}
         </p>
-        <p className="mt-2">© {new Date().getFullYear()} MedLens. All rights reserved.</p>
+        <p className="mt-2">© {new Date().getFullYear()} {t.landing.copyright}</p>
       </footer>
     </div>
   );
